@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<configuration>
+    <master_crl>
+        <name>issuingca.crl</name>
+        <retrieval>file</retrieval>
+        <path>C:\Windows\System32\certsrv\CertEnroll\</path>
+    </master_crl>
+
+    <cdps>
+        <% unless @cdps.first.nil? %>
+        <% @cdps.each do |cdp| %>
+        <cdp>
+            <name><%= cdp['name'] %></name>
+            <retrieval><%= cdp['retrieval'] %></retrieval>
+            <retrieval_path><%= cdp['retrieval_path'] %></retrieval_path>
+            <push><% if cdp['push'] == true || cdp['push'] == 'true' %>true<% end %></push>  <!-- no value for FALSE -->
+            <push_method><%= cdp['push_method'] %></push_method>
+            <push_path><%= cdp['push_path'] %></push_path>
+        </cdp>
+        <% unless cdp.equal? @cdps.last %>
+
+        <% end %>
+        <% end %>
+        <% end %>
+    </cdps>
+
+    <SMTP>
+        <send_SMTP><% if @smtp_send_mail == true || @smtp_send_mail == 'true' %>true<% end %></send_SMTP> <!-- no value for FALSE -->
+        <SmtpServer><%= @smtp_server %></SmtpServer>
+        <from><%= @smtp_from %></from>
+        <to><%= @smtp_to.join(',') %></to>
+        <published_notify><% if @smtp_published_notify == true || @smtp_published_notify == 'true'%>true<% end %></published_notify> <!-- no value for FALSE -->
+        <title><%= @smtp_title %></title>
+        <SMTPThreshold>2</SMTPThreshold> <!-- event level when an SMTP message is sent -->
+    </SMTP>
+
+    <eventvwr>
+        <EventSource><%= @eventvwr_event_source %></EventSource>
+        <EventID><%= @eventvwr_event_id %></EventID>
+        <EventHigh><%= @eventvwr_event_high %></EventHigh>
+        <EventWarning><%= @eventvwr_event_warning %></EventWarning>
+        <EventInformation><%= @eventvwr_event_information %></EventInformation>
+    </eventvwr>
+
+    <warnings>
+        <threshold><%= @warnings_threshold %></threshold>
+        <threshold_unit><%= @warnings_threshold_unit%></threshold_unit> <!-- days, hours, minutes or seconds -->
+    </warnings>
+
+    <ADCS>
+        <cluster><%= @cluster_name %></cluster> <!-- no value for FALSE -->
+    </ADCS>
+
+    <output>
+        <outfile><% unless @outfile.first.nil? %><%= @outfile.join(',') %><% end %></outfile>
+    </output>
+</configuration>

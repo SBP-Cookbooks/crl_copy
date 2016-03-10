@@ -1,0 +1,25 @@
+AllCops:
+  Include:
+    - 'Berksfile'
+    - '**/Gemfile'
+    - 'Guardfile'
+    - 'Thorfile'
+  Exclude:
+    - 'Rakefile'
+    - 'vendor/**'
+
+Metrics/LineLength:
+  Enabled: false
+
+Style/Alias:
+  Enabled: false
+Style/Documentation:
+  Enabled: false
+Style/SpaceBeforeFirstArg:
+  Exclude:
+    - '**/metadata.rb'
+
+# todo: resolve these issues:
+
+Style/NestedTernaryOperator:
+  Enabled: false

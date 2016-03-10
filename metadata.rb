@@ -1,0 +1,7 @@
+name             'crl_copy'
+maintainer       'Stephen Hoekstra'
+maintainer_email 'shoekstra@schubergphilis.com'
+license          'All rights reserved'
+description      'Chef cookbook to installand configure the CRL Copy PS script from Script Center'
+version          '0.1.0'
+recipe           'crl_copy::default', 'Installs and configures script and scheduled task to manage CRL distribution.'
