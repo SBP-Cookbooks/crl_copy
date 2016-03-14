@@ -12,11 +12,34 @@ require 'spec_helper'
 describe 'crl_copy::default' do
   describe 'when all attributes are default' do
     cached(:chef_run) do
-      ChefSpec::ServerRunner.new.converge(described_recipe)
+      ChefSpec::SoloRunner.new(file_cache_path: '/Chef/cache').converge(described_recipe)
     end
 
     it 'should converge successfully' do
       expect { chef_run }.to_not raise_error
+    end
+
+    it 'installs the PSCX PowerShell module'do
+      expect(chef_run).to create_remote_file('/Chef/cache/pscx.msi').with(
+        source: 'http://download-codeplex.sec.s-msft.com/Download/Release?ProjectName=pscx&DownloadId=923562&FileTime=130585918034470000&Build=21031'
+      )
+
+      expect(chef_run).to install_package('PowerShell Community Extensions 3.2.0').with(
+        source: '/Chef/cache/pscx.msi',
+        installer_type: :msi
+      )
+    end
+
+    it 'installs the PSPKI PowerShell module' do
+      expect(chef_run).to create_remote_file('/Chef/cache/pspki.exe').with(
+        source: 'http://download-codeplex.sec.s-msft.com/Download/Release?ProjectName=pspki&DownloadId=1440723&FileTime=130716062844400000&Build=21031'
+      )
+
+      expect(chef_run).to install_package('PowerShell PKI Module').with(
+        source: '/Chef/cache/pspki.exe',
+        installer_type: :custom,
+        options: '/quiet'
+      )
     end
 
     it 'should write warning' do
@@ -24,9 +47,47 @@ describe 'crl_copy::default' do
     end
   end
 
+  describe "when specifying custom powershell module attributes" do
+    let(:chef_run) do
+      ChefSpec::SoloRunner.new(file_cache_path: '/Chef/cache') do |node|
+        node.set['crl_copy']['pscx']['package_name']  = 'pscx package name'
+        node.set['crl_copy']['pscx']['source_url']    = 'http://test'
+        node.set['crl_copy']['pspki']['package_name'] = 'pspki package name'
+        node.set['crl_copy']['pspki']['source_name']  = 'http://test'
+      end.converge(described_recipe)
+    end
+
+    it 'converge successfully' do
+      expect { chef_run }.to_not raise_error
+    end
+
+    it 'installs the PSCX PowerShell module'do
+      expect(chef_run).to create_remote_file('/Chef/cache/pscx.msi').with(
+        source: 'http://test'
+      )
+
+      expect(chef_run).to install_package('pscx package name').with(
+        source: '/Chef/cache/pscx.msi',
+        installer_type: :msi
+      )
+    end
+
+    it 'installs the PSPKI PowerShell module' do
+      expect(chef_run).to create_remote_file('/Chef/cache/pspki.exe').with(
+        source: 'http://test'
+      )
+
+      expect(chef_run).to install_package('pspki package name').with(
+        source: '/Chef/cache/pspki.exe',
+        installer_type: :custom,
+        options: '/quiet'
+      )
+    end
+  end
+
   describe "when specifying one CRL in the ['crl_copy']['master_crl'] attribute with all resource attributes" do
     cached(:chef_run) do
-      ChefSpec::ServerRunner.new(step_into: :crl_copy) do |node|
+      ChefSpec::SoloRunner.new(file_cache_path: '/Chef/cache', step_into: :crl_copy) do |node|
         node.set['crl_copy']['master_crls'] = {
           'C:\Windows\System32\certsrv\CertEnroll\issuingca.crl' => {
             'cdps' => [
@@ -260,7 +321,7 @@ describe 'crl_copy::default' do
 
   describe "when specifying two CRLs in the ['crl_copy']['master_crl'] attribute with all resource attributes" do
     cached(:chef_run) do
-      ChefSpec::ServerRunner.new do |node|
+      ChefSpec::SoloRunner.new(file_cache_path: '/Chef/cache') do |node|
         node.set['crl_copy']['master_crls'] = [
           {
             'C:\Windows\System32\certsrv\CertEnroll\issuingca1.crl' => {
@@ -448,7 +509,7 @@ describe 'crl_copy::default' do
   describe 'when using cookbook attributes as resource defaults' do
     describe "when specifying one CDP in the ['crl_copy']['master_crl'] attribute" do
       cached(:chef_run) do
-        ChefSpec::ServerRunner.new(step_into: :crl_copy) do |node|
+        ChefSpec::SoloRunner.new(file_cache_path: '/Chef/cache', step_into: :crl_copy) do |node|
           node.set['crl_copy']['eventvwr']['event_source']      = 'CRL Copy Process'
           node.set['crl_copy']['eventvwr']['event_id']          = 5000
           node.set['crl_copy']['eventvwr']['event_high']        = 1
@@ -601,7 +662,7 @@ describe 'crl_copy::default' do
 
     describe "when specifying three CDPs in the ['crl_copy']['master_crl'] attribute" do
       cached(:chef_run) do
-        ChefSpec::ServerRunner.new(step_into: :crl_copy) do |node|
+        ChefSpec::SoloRunner.new(file_cache_path: '/Chef/cache', step_into: :crl_copy) do |node|
           node.set['crl_copy']['eventvwr']['event_source']      = 'CRL Copy Process'
           node.set['crl_copy']['eventvwr']['event_id']          = 5000
           node.set['crl_copy']['eventvwr']['event_high']        = 1
@@ -767,7 +828,7 @@ describe 'crl_copy::default' do
 
     describe "when specifying one CDP with \"push = false\" in the ['crl_copy']['master_crl'] attribute" do
       cached(:chef_run) do
-        ChefSpec::ServerRunner.new(step_into: :crl_copy) do |node|
+        ChefSpec::SoloRunner.new(file_cache_path: '/Chef/cache', step_into: :crl_copy) do |node|
           node.set['crl_copy']['eventvwr']['event_source']      = 'CRL Copy Process'
           node.set['crl_copy']['eventvwr']['event_id']          = 5000
           node.set['crl_copy']['eventvwr']['event_high']        = 1
@@ -863,7 +924,7 @@ describe 'crl_copy::default' do
 
     describe "when ['crl_copy']['smtp']['published_notify'] and ['crl_copy']['smtp']['send_mail'] attributes are false" do
       cached(:chef_run) do
-        ChefSpec::ServerRunner.new(step_into: :crl_copy) do |node|
+        ChefSpec::SoloRunner.new(file_cache_path: '/Chef/cache', step_into: :crl_copy) do |node|
           node.set['crl_copy']['eventvwr']['event_source']      = 'CRL Copy Process'
           node.set['crl_copy']['eventvwr']['event_id']          = 5000
           node.set['crl_copy']['eventvwr']['event_high']        = 1
