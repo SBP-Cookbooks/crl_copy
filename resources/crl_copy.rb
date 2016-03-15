@@ -50,9 +50,6 @@ action :create do
     source 'CRL_Copy.ps1'
   end
 
-  cdps = new_resource.cdps
-  cdps = [cdps] unless cdps.is_a?(Array)
-
   outfile = new_resource.outfile
   outfile = [outfile] unless outfile.is_a?(Array)
 
@@ -80,7 +77,7 @@ action :create do
   template "#{crl_dir}\\CRL_Config.XML" do
     source 'CRL_Config.XML.erb'
     variables(
-      cdps: cdps,
+      cdps: new_resource.cdps,
       cluster_name: new_resource.cluster_name,
       eventvwr_event_high: eventvwr_event_high,
       eventvwr_event_id: new_resource.eventvwr_event_id,

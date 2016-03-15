@@ -88,51 +88,38 @@ describe 'crl_copy::default' do
   describe "when specifying one CRL in the ['crl_copy']['master_crl'] attribute with all resource attributes" do
     cached(:chef_run) do
       ChefSpec::SoloRunner.new(file_cache_path: '/Chef/cache', step_into: :crl_copy) do |node|
-        node.set['crl_copy']['master_crls'] = {
-          'C:\Windows\System32\certsrv\CertEnroll\issuingca.crl' => {
-            'cdps' => [
-              {
-                'name'           => 'internal cdp1',
-                'retrieval'      => 'www',
-                'retrieval_path' => 'http://www.f.internal/pki/',
-                'push'           => 'true',
-                'push_method'    => 'file',
-                'push_path'      => '\\\\www.f.internal\pki\\'
-              },
-              {
-                'name'           => 'internal ldap',
-                'retrieval'      => 'ldap',
-                'retrieval_path' => 'dc=f,dc=internal',
-                'push'           => '',
-                'push_method'    => '',
-                'push_path'      => ''
-              },
-              {
-                'name'           => 'external cdp',
-                'retrieval'      => 'www',
-                'retrieval_path' => 'http://pki.g.internal/pki/',
-                'push'           => '',
-                'push_method'    => '',
-                'push_path'      => ''
-              }
-            ],
-            'eventvwr_event_source'      => 'CRL Copy Process',
-            'eventvwr_event_id'          => 5000,
-            'eventvwr_event_high'        => 1,
-            'eventvwr_event_warning'     => 2,
-            'eventvwr_event_information' => 4,
-            'outfile'                    => ['c:\windows\system32\certsrv\certenroll\CRLCopy.htm', '\\\\www.f.internal\pki\CRLCopy.htm'],
-            'smtp_send_mail'             => true,
-            'smtp_server'                => 'exchange.f.internal',
-            'smtp_from'                  => 'crlcopy@f.internal',
-            'smtp_to'                    => ['pfox@f.internal', 'pierref@f.internal'],
-            'smtp_published_notify'      => true,
-            'smtp_title'                 => 'CRL Copy Process Results',
-            'smtp_threshold'             => 2,
-            'warnings_threshold'         => 5,
-            'warnings_threshold_unit'    => 'Hours'
-          }
-        }
+        node.set['crl_copy']['master_crls']['C:\Windows\System32\certsrv\CertEnroll\issuingca.crl'].tap do |master_crl|
+          master_crl['cdps']['internal cdp1']['retrieval'] = 'www'
+          master_crl['cdps']['internal cdp1']['retrieval_path'] = 'http://www.f.internal/pki/'
+          master_crl['cdps']['internal cdp1']['push'] = 'true'
+          master_crl['cdps']['internal cdp1']['push_method'] = 'file'
+          master_crl['cdps']['internal cdp1']['push_path'] = '\\\\www.f.internal\pki\\'
+          master_crl['cdps']['internal ldap']['retrieval'] = 'ldap'
+          master_crl['cdps']['internal ldap']['retrieval_path'] = 'dc=f,dc=internal'
+          master_crl['cdps']['internal ldap']['push'] = ''
+          master_crl['cdps']['internal ldap']['push_method'] = ''
+          master_crl['cdps']['internal ldap']['push_path'] = ''
+          master_crl['cdps']['external cdp']['retrieval'] = 'www'
+          master_crl['cdps']['external cdp']['retrieval_path'] = 'http://pki.g.internal/pki/'
+          master_crl['cdps']['external cdp']['push'] = ''
+          master_crl['cdps']['external cdp']['push_method'] = ''
+          master_crl['cdps']['external cdp']['push_path'] = ''
+          master_crl['eventvwr_event_source'] = 'CRL Copy Process'
+          master_crl['eventvwr_event_id'] = 5000
+          master_crl['eventvwr_event_high'] = 1
+          master_crl['eventvwr_event_warning'] = 2
+          master_crl['eventvwr_event_information'] = 4
+          master_crl['outfile'] = ['c:\windows\system32\certsrv\certenroll\CRLCopy.htm', '\\\\www.f.internal\pki\CRLCopy.htm']
+          master_crl['smtp_send_mail'] = true
+          master_crl['smtp_server'] = 'exchange.f.internal'
+          master_crl['smtp_from'] = 'crlcopy@f.internal'
+          master_crl['smtp_to'] = ['pfox@f.internal', 'pierref@f.internal']
+          master_crl['smtp_published_notify'] = true
+          master_crl['smtp_title'] = 'CRL Copy Process Results'
+          master_crl['smtp_threshold'] = 2
+          master_crl['warnings_threshold'] = 5
+          master_crl['warnings_threshold_unit'] = 'Hours'
+        end
       end.converge(described_recipe)
     end
 
@@ -146,32 +133,29 @@ describe 'crl_copy::default' do
 
     it 'should create a crl_copy[C:\Windows\System32\certsrv\CertEnroll\issuingca.crl] resource' do
       expect(chef_run).to create_crl_copy('C:\Windows\System32\certsrv\CertEnroll\issuingca.crl').with(
-        'cdps' => [
-          {
-            'name'           => 'internal cdp1',
+        'cdps' => {
+          'internal cdp1' => {
             'retrieval'      => 'www',
             'retrieval_path' => 'http://www.f.internal/pki/',
             'push'           => 'true',
             'push_method'    => 'file',
             'push_path'      => '\\\\www.f.internal\pki\\'
           },
-          {
-            'name'           => 'internal ldap',
+          'internal ldap' => {
             'retrieval'      => 'ldap',
             'retrieval_path' => 'dc=f,dc=internal',
             'push'           => '',
             'push_method'    => '',
             'push_path'      => ''
           },
-          {
-            'name'           => 'external cdp',
+          'external cdp' => {
             'retrieval'      => 'www',
             'retrieval_path' => 'http://pki.g.internal/pki/',
             'push'           => '',
             'push_method'    => '',
             'push_path'      => ''
           }
-        ],
+        },
         'eventvwr_event_source'      => 'CRL Copy Process',
         'eventvwr_event_id'          => 5000,
         'eventvwr_event_high'        => 1,
@@ -199,36 +183,33 @@ describe 'crl_copy::default' do
 
       it 'renders template C:\CrlCopy\issuingca\CRL_Config.XML' do
         expect(chef_run).to create_template('C:\CrlCopy\issuingca\CRL_Config.XML').with_variables(
-          cdps: [
-            {
-              'name'           => 'internal cdp1',
+          cdps: {
+            'internal cdp1' => {
               'retrieval'      => 'www',
               'retrieval_path' => 'http://www.f.internal/pki/',
               'push'           => 'true',
               'push_method'    => 'file',
               'push_path'      => '\\\\www.f.internal\pki\\'
             },
-            {
-              'name'           => 'internal ldap',
+            'internal ldap' => {
               'retrieval'      => 'ldap',
               'retrieval_path' => 'dc=f,dc=internal',
               'push'           => '',
               'push_method'    => '',
               'push_path'      => ''
             },
-            {
-              'name'           => 'external cdp',
+            'external cdp' => {
               'retrieval'      => 'www',
               'retrieval_path' => 'http://pki.g.internal/pki/',
               'push'           => '',
               'push_method'    => '',
               'push_path'      => ''
             }
-          ],
+          },
           cluster_name: nil,
-          eventvwr_event_high: 1,
           eventvwr_event_id: 5000,
           eventvwr_event_information: 4,
+          eventvwr_event_high: 1,
           eventvwr_event_source: 'CRL Copy Process',
           eventvwr_event_warning: 2,
           outfile: ['c:\windows\system32\certsrv\certenroll\CRLCopy.htm', '\\\\www.f.internal\pki\CRLCopy.htm'],
@@ -322,129 +303,98 @@ describe 'crl_copy::default' do
   describe "when specifying two CRLs in the ['crl_copy']['master_crl'] attribute with all resource attributes" do
     cached(:chef_run) do
       ChefSpec::SoloRunner.new(file_cache_path: '/Chef/cache') do |node|
-        node.set['crl_copy']['master_crls'] = [
-          {
-            'C:\Windows\System32\certsrv\CertEnroll\issuingca1.crl' => {
-              'cdps' => [
-                {
-                  'name'           => 'internal cdp1',
-                  'retrieval'      => 'www',
-                  'retrieval_path' => 'http://www.f.internal/pki/',
-                  'push'           => 'true',
-                  'push_method'    => 'file',
-                  'push_path'      => '\\\\www.f.internal\pki\\'
-                },
-                {
-                  'name'           => 'internal ldap',
-                  'retrieval'      => 'ldap',
-                  'retrieval_path' => 'dc=f,dc=internal',
-                  'push'           => '',
-                  'push_method'    => '',
-                  'push_path'      => ''
-                },
-                {
-                  'name'           => 'external cdp',
-                  'retrieval'      => 'www',
-                  'retrieval_path' => 'http://pki.g.internal/pki/',
-                  'push'           => '',
-                  'push_method'    => '',
-                  'push_path'      => ''
-                }
-              ],
-              'eventvwr_event_source'      => 'CRL Copy Process',
-              'eventvwr_event_id'          => 5000,
-              'eventvwr_event_high'        => 1,
-              'eventvwr_event_warning'     => 2,
-              'eventvwr_event_information' => 4,
-              'outfile'                    => ['c:\windows\system32\certsrv\certenroll\CRLCopy.htm', '\\\\www.f.internal\pki\CRLCopy.htm'],
-              'smtp_send_mail'             => true,
-              'smtp_server'                => 'exchange.f.internal',
-              'smtp_from'                  => 'crlcopy@f.internal',
-              'smtp_to'                    => ['pfox@f.internal', 'pierref@f.internal'],
-              'smtp_published_notify'      => true,
-              'smtp_title'                 => 'CRL Copy Process Results',
-              'smtp_threshold'             => 2,
-              'warnings_threshold'         => 5,
-              'warnings_threshold_unit'    => 'Hours'
-            }
-          },
-          {
-            'C:\Windows\System32\certsrv\CertEnroll\issuingca2.crl' => {
-              'cdps' => [
-                {
-                  'name'           => 'internal cdp1',
-                  'retrieval'      => 'www',
-                  'retrieval_path' => 'http://www.f.internal/pki/',
-                  'push'           => 'true',
-                  'push_method'    => 'file',
-                  'push_path'      => '\\\\www.f.internal\pki\\'
-                },
-                {
-                  'name'           => 'internal ldap',
-                  'retrieval'      => 'ldap',
-                  'retrieval_path' => 'dc=f,dc=internal',
-                  'push'           => '',
-                  'push_method'    => '',
-                  'push_path'      => ''
-                },
-                {
-                  'name'           => 'external cdp',
-                  'retrieval'      => 'www',
-                  'retrieval_path' => 'http://pki.g.internal/pki/',
-                  'push'           => '',
-                  'push_method'    => '',
-                  'push_path'      => ''
-                }
-              ],
-              'eventvwr_event_source'      => 'CRL Copy Process',
-              'eventvwr_event_id'          => 5000,
-              'eventvwr_event_high'        => 1,
-              'eventvwr_event_warning'     => 2,
-              'eventvwr_event_information' => 4,
-              'outfile'                    => ['c:\windows\system32\certsrv\certenroll\CRLCopy.htm', '\\\\www.f.internal\pki\CRLCopy.htm'],
-              'smtp_send_mail'             => true,
-              'smtp_server'                => 'exchange.f.internal',
-              'smtp_from'                  => 'crlcopy@f.internal',
-              'smtp_to'                    => ['pfox@f.internal', 'pierref@f.internal'],
-              'smtp_published_notify'      => true,
-              'smtp_title'                 => 'CRL Copy Process Results',
-              'smtp_threshold'             => 2,
-              'warnings_threshold'         => 5,
-              'warnings_threshold_unit'    => 'Hours'
-            }
-          }
-        ]
+        node.set['crl_copy']['master_crls']['C:\Windows\System32\certsrv\CertEnroll\issuingca1.crl'].tap do |master_crl|
+          master_crl['cdps']['internal cdp1']['retrieval'] = 'www'
+          master_crl['cdps']['internal cdp1']['retrieval_path'] = 'http://www.f.internal/pki/'
+          master_crl['cdps']['internal cdp1']['push'] = 'true'
+          master_crl['cdps']['internal cdp1']['push_method'] = 'file'
+          master_crl['cdps']['internal cdp1']['push_path'] = '\\\\www.f.internal\pki\\'
+          master_crl['cdps']['internal ldap']['retrieval'] = 'ldap'
+          master_crl['cdps']['internal ldap']['retrieval_path'] = 'dc=f,dc=internal'
+          master_crl['cdps']['internal ldap']['push'] = ''
+          master_crl['cdps']['internal ldap']['push_method'] = ''
+          master_crl['cdps']['internal ldap']['push_path'] = ''
+          master_crl['cdps']['external cdp']['retrieval'] = 'www'
+          master_crl['cdps']['external cdp']['retrieval_path'] = 'http://pki.g.internal/pki/'
+          master_crl['cdps']['external cdp']['push'] = ''
+          master_crl['cdps']['external cdp']['push_method'] = ''
+          master_crl['cdps']['external cdp']['push_path'] = ''
+          master_crl['eventvwr_event_source'] = 'CRL Copy Process'
+          master_crl['eventvwr_event_id'] = 5000
+          master_crl['eventvwr_event_high'] = 1
+          master_crl['eventvwr_event_warning'] = 2
+          master_crl['eventvwr_event_information'] = 4
+          master_crl['outfile'] = ['c:\windows\system32\certsrv\certenroll\CRLCopy.htm', '\\\\www.f.internal\pki\CRLCopy.htm']
+          master_crl['smtp_send_mail'] = true
+          master_crl['smtp_server'] = 'exchange.f.internal'
+          master_crl['smtp_from'] = 'crlcopy@f.internal'
+          master_crl['smtp_to'] = ['pfox@f.internal', 'pierref@f.internal']
+          master_crl['smtp_published_notify'] = true
+          master_crl['smtp_title'] = 'CRL Copy Process Results'
+          master_crl['smtp_threshold'] = 2
+          master_crl['warnings_threshold'] = 5
+          master_crl['warnings_threshold_unit'] = 'Hours'
+        end
+        node.set['crl_copy']['master_crls']['C:\Windows\System32\certsrv\CertEnroll\issuingca2.crl'].tap do |master_crl|
+          master_crl['cdps']['internal cdp1']['retrieval'] = 'www'
+          master_crl['cdps']['internal cdp1']['retrieval_path'] = 'http://www.f.internal/pki/'
+          master_crl['cdps']['internal cdp1']['push'] = 'true'
+          master_crl['cdps']['internal cdp1']['push_method'] = 'file'
+          master_crl['cdps']['internal cdp1']['push_path'] = '\\\\www.f.internal\pki\\'
+          master_crl['cdps']['internal ldap']['retrieval'] = 'ldap'
+          master_crl['cdps']['internal ldap']['retrieval_path'] = 'dc=f,dc=internal'
+          master_crl['cdps']['internal ldap']['push'] = ''
+          master_crl['cdps']['internal ldap']['push_method'] = ''
+          master_crl['cdps']['internal ldap']['push_path'] = ''
+          master_crl['cdps']['external cdp']['retrieval'] = 'www'
+          master_crl['cdps']['external cdp']['retrieval_path'] = 'http://pki.g.internal/pki/'
+          master_crl['cdps']['external cdp']['push'] = ''
+          master_crl['cdps']['external cdp']['push_method'] = ''
+          master_crl['cdps']['external cdp']['push_path'] = ''
+          master_crl['eventvwr_event_source'] = 'CRL Copy Process'
+          master_crl['eventvwr_event_id'] = 5000
+          master_crl['eventvwr_event_high'] = 1
+          master_crl['eventvwr_event_warning'] = 2
+          master_crl['eventvwr_event_information'] = 4
+          master_crl['outfile'] = ['c:\windows\system32\certsrv\certenroll\CRLCopy.htm', '\\\\www.f.internal\pki\CRLCopy.htm']
+          master_crl['smtp_send_mail'] = true
+          master_crl['smtp_server'] = 'exchange.f.internal'
+          master_crl['smtp_from'] = 'crlcopy@f.internal'
+          master_crl['smtp_to'] = ['pfox@f.internal', 'pierref@f.internal']
+          master_crl['smtp_published_notify'] = true
+          master_crl['smtp_title'] = 'CRL Copy Process Results'
+          master_crl['smtp_threshold'] = 2
+          master_crl['warnings_threshold'] = 5
+          master_crl['warnings_threshold_unit'] = 'Hours'
+        end
       end.converge(described_recipe)
     end
 
     it 'should create a crl_copy[C:\Windows\System32\certsrv\CertEnroll\issuingca1.crl] resource' do
       expect(chef_run).to create_crl_copy('C:\Windows\System32\certsrv\CertEnroll\issuingca1.crl').with(
-        'cdps' => [
-          {
-            'name'           => 'internal cdp1',
+        'cdps' => {
+          'internal cdp1' => {
             'retrieval'      => 'www',
             'retrieval_path' => 'http://www.f.internal/pki/',
             'push'           => 'true',
             'push_method'    => 'file',
             'push_path'      => '\\\\www.f.internal\pki\\'
           },
-          {
-            'name'           => 'internal ldap',
+          'internal ldap' => {
             'retrieval'      => 'ldap',
             'retrieval_path' => 'dc=f,dc=internal',
             'push'           => '',
             'push_method'    => '',
             'push_path'      => ''
           },
-          {
-            'name'           => 'external cdp',
+          'external cdp' => {
             'retrieval'      => 'www',
             'retrieval_path' => 'http://pki.g.internal/pki/',
             'push'           => '',
             'push_method'    => '',
             'push_path'      => ''
           }
-        ],
+        },
         'eventvwr_event_source'      => 'CRL Copy Process',
         'eventvwr_event_id'          => 5000,
         'eventvwr_event_high'        => 1,
@@ -463,32 +413,29 @@ describe 'crl_copy::default' do
 
     it 'should create a crl_copy[C:\Windows\System32\certsrv\CertEnroll\issuingca2.crl] resource' do
       expect(chef_run).to create_crl_copy('C:\Windows\System32\certsrv\CertEnroll\issuingca2.crl').with(
-        'cdps' => [
-          {
-            'name'           => 'internal cdp1',
+        'cdps' => {
+          'internal cdp1' => {
             'retrieval'      => 'www',
             'retrieval_path' => 'http://www.f.internal/pki/',
             'push'           => 'true',
             'push_method'    => 'file',
             'push_path'      => '\\\\www.f.internal\pki\\'
           },
-          {
-            'name'           => 'internal ldap',
+          'internal ldap' => {
             'retrieval'      => 'ldap',
             'retrieval_path' => 'dc=f,dc=internal',
             'push'           => '',
             'push_method'    => '',
             'push_path'      => ''
           },
-          {
-            'name'           => 'external cdp',
+          'external cdp' => {
             'retrieval'      => 'www',
             'retrieval_path' => 'http://pki.g.internal/pki/',
             'push'           => '',
             'push_method'    => '',
             'push_path'      => ''
           }
-        ],
+        },
         'eventvwr_event_source'      => 'CRL Copy Process',
         'eventvwr_event_id'          => 5000,
         'eventvwr_event_high'        => 1,
@@ -525,19 +472,14 @@ describe 'crl_copy::default' do
           node.set['crl_copy']['warnings']['threshold']         = 5
           node.set['crl_copy']['warnings']['threshold_unit']    = 'Hours' # days, hours, minutes or seconds
 
-          node.set['crl_copy']['master_crls'] = {
-            'C:\Windows\System32\certsrv\CertEnroll\issuingca.crl' => {
-              'cdps' => {
-                'name'           => 'internal cdp1',
-                'retrieval'      => 'www',
-                'retrieval_path' => 'http://www.f.internal/pki/',
-                'push'           => 'true',
-                'push_method'    => 'file',
-                'push_path'      => '\\\\www.f.internal\pki\\'
-              },
-              'outfile' => ['c:\windows\system32\certsrv\certenroll\CRLCopy.htm', '\\\\www.f.internal\pki\CRLCopy.htm']
-            }
-          }
+          node.set['crl_copy']['master_crls']['C:\Windows\System32\certsrv\CertEnroll\issuingca.crl'].tap do |master_crl|
+            master_crl['cdps']['internal cdp1']['retrieval'] = 'www'
+            master_crl['cdps']['internal cdp1']['retrieval_path'] = 'http://www.f.internal/pki/'
+            master_crl['cdps']['internal cdp1']['push'] = 'true'
+            master_crl['cdps']['internal cdp1']['push_method'] = 'file'
+            master_crl['cdps']['internal cdp1']['push_path'] = '\\\\www.f.internal\pki\\'
+            master_crl['outfile'] = ['c:\windows\system32\certsrv\certenroll\CRLCopy.htm', '\\\\www.f.internal\pki\CRLCopy.htm']
+          end
         end.converge(described_recipe)
       end
 
@@ -551,13 +493,14 @@ describe 'crl_copy::default' do
 
       it 'should create a crl_copy[C:\Windows\System32\certsrv\CertEnroll\issuingca.crl] resource' do
         expect(chef_run).to create_crl_copy('C:\Windows\System32\certsrv\CertEnroll\issuingca.crl').with(
-          'cdps' => {
-            'name' => 'internal cdp1',
-            'retrieval'      => 'www',
-            'retrieval_path' => 'http://www.f.internal/pki/',
-            'push'           => 'true',
-            'push_method'    => 'file',
-            'push_path'      => '\\\\www.f.internal\pki\\'
+          cdps: {
+            'internal cdp1' => {
+              'retrieval'      => 'www',
+              'retrieval_path' => 'http://www.f.internal/pki/',
+              'push'           => 'true',
+              'push_method'    => 'file',
+              'push_path'      => '\\\\www.f.internal\pki\\'
+            }
           },
           'outfile' => ['c:\windows\system32\certsrv\certenroll\CRLCopy.htm', '\\\\www.f.internal\pki\CRLCopy.htm']
         )
@@ -574,16 +517,15 @@ describe 'crl_copy::default' do
 
         it 'renders template C:\CrlCopy\issuingca\CRL_Config.XML' do
           expect(chef_run).to create_template('C:\CrlCopy\issuingca\CRL_Config.XML').with_variables(
-            cdps: [
-              {
-                'name'           => 'internal cdp1',
+            cdps: {
+              'internal cdp1' => {
                 'retrieval'      => 'www',
                 'retrieval_path' => 'http://www.f.internal/pki/',
                 'push'           => 'true',
                 'push_method'    => 'file',
                 'push_path'      => '\\\\www.f.internal\pki\\'
               }
-            ],
+            },
             cluster_name: nil,
             eventvwr_event_high: 1,
             eventvwr_event_id: 5000,
@@ -678,100 +620,81 @@ describe 'crl_copy::default' do
           node.set['crl_copy']['warnings']['threshold']         = 5
           node.set['crl_copy']['warnings']['threshold_unit']    = 'Hours' # days, hours, minutes or seconds
 
-          node.set['crl_copy']['master_crls'] = {
-            'C:\Windows\System32\certsrv\CertEnroll\issuingca.crl' => {
-              'cdps' => [
-                {
-                  'name'           => 'internal cdp1',
-                  'retrieval'      => 'www',
-                  'retrieval_path' => 'http://www.f.internal/pki/',
-                  'push'           => 'true',
-                  'push_method'    => 'file',
-                  'push_path'      => '\\\\www.f.internal\pki\\'
-                },
-                {
-                  'name'           => 'internal ldap',
-                  'retrieval'      => 'ldap',
-                  'retrieval_path' => 'dc=f,dc=internal',
-                  'push'           => '',
-                  'push_method'    => '',
-                  'push_path'      => ''
-                },
-                {
-                  'name'           => 'external cdp',
-                  'retrieval'      => 'www',
-                  'retrieval_path' => 'http://pki.g.internal/pki/',
-                  'push'           => '',
-                  'push_method'    => '',
-                  'push_path'      => ''
-                }
-              ],
-              'outfile' => ['c:\windows\system32\certsrv\certenroll\CRLCopy.htm', '\\\\www.f.internal\pki\CRLCopy.htm']
-            }
-          }
+          node.set['crl_copy']['master_crls']['C:\Windows\System32\certsrv\CertEnroll\issuingca.crl'].tap do |master_crl|
+            master_crl['cdps']['internal cdp1']['retrieval'] = 'www'
+            master_crl['cdps']['internal cdp1']['retrieval_path'] = 'http://www.f.internal/pki/'
+            master_crl['cdps']['internal cdp1']['push'] = 'true'
+            master_crl['cdps']['internal cdp1']['push_method'] = 'file'
+            master_crl['cdps']['internal cdp1']['push_path'] = '\\\\www.f.internal\pki\\'
+            master_crl['cdps']['internal ldap']['retrieval'] = 'ldap'
+            master_crl['cdps']['internal ldap']['retrieval_path'] = 'dc=f,dc=internal'
+            master_crl['cdps']['internal ldap']['push'] = ''
+            master_crl['cdps']['internal ldap']['push_method'] = ''
+            master_crl['cdps']['internal ldap']['push_path'] = ''
+            master_crl['cdps']['external cdp']['retrieval'] = 'www'
+            master_crl['cdps']['external cdp']['retrieval_path'] = 'http://pki.g.internal/pki/'
+            master_crl['cdps']['external cdp']['push'] = ''
+            master_crl['cdps']['external cdp']['push_method'] = ''
+            master_crl['cdps']['external cdp']['push_path'] = ''
+            master_crl['outfile'] = ['c:\windows\system32\certsrv\certenroll\CRLCopy.htm', '\\\\www.f.internal\pki\CRLCopy.htm']
+          end
         end.converge(described_recipe)
       end
 
       it 'should create a crl_copy[C:\Windows\System32\certsrv\CertEnroll\issuingca.crl] resource' do
         expect(chef_run).to create_crl_copy('C:\Windows\System32\certsrv\CertEnroll\issuingca.crl').with(
-          'cdps' => [
-            {
-              'name'           => 'internal cdp1',
+          'cdps' => {
+            'internal cdp1' => {
               'retrieval'      => 'www',
               'retrieval_path' => 'http://www.f.internal/pki/',
               'push'           => 'true',
               'push_method'    => 'file',
               'push_path'      => '\\\\www.f.internal\pki\\'
             },
-            {
-              'name'           => 'internal ldap',
+            'internal ldap' => {
               'retrieval'      => 'ldap',
               'retrieval_path' => 'dc=f,dc=internal',
               'push'           => '',
               'push_method'    => '',
               'push_path'      => ''
             },
-            {
-              'name'           => 'external cdp',
+            'external cdp' => {
               'retrieval'      => 'www',
               'retrieval_path' => 'http://pki.g.internal/pki/',
               'push'           => '',
               'push_method'    => '',
               'push_path'      => ''
             }
-          ]
+          },
         )
       end
 
       context 'it steps into crl_copy' do
         it 'renders template C:\CrlCopy\issuingca\CRL_Config.XML' do
           expect(chef_run).to create_template('C:\CrlCopy\issuingca\CRL_Config.XML').with_variables(
-            cdps: [
-              {
-                'name'           => 'internal cdp1',
+            cdps: {
+              'internal cdp1' => {
                 'retrieval'      => 'www',
                 'retrieval_path' => 'http://www.f.internal/pki/',
                 'push'           => 'true',
                 'push_method'    => 'file',
                 'push_path'      => '\\\\www.f.internal\pki\\'
               },
-              {
-                'name'           => 'internal ldap',
+              'internal ldap' => {
                 'retrieval'      => 'ldap',
                 'retrieval_path' => 'dc=f,dc=internal',
                 'push'           => '',
                 'push_method'    => '',
                 'push_path'      => ''
               },
-              {
-                'name'           => 'external cdp',
+              'external cdp' => {
                 'retrieval'      => 'www',
                 'retrieval_path' => 'http://pki.g.internal/pki/',
                 'push'           => '',
                 'push_method'    => '',
                 'push_path'      => ''
               }
-            ],
+            },
             cluster_name: nil,
             eventvwr_event_high: 1,
             eventvwr_event_id: 5000,
@@ -844,48 +767,41 @@ describe 'crl_copy::default' do
           node.set['crl_copy']['warnings']['threshold']         = 5
           node.set['crl_copy']['warnings']['threshold_unit']    = 'Hours' # days, hours, minutes or seconds
 
-          node.set['crl_copy']['master_crls'] = {
-            'C:\Windows\System32\certsrv\CertEnroll\issuingca.crl' => {
-              'cdps' => {
-                'name'           => 'internal cdp1',
-                'retrieval'      => 'www',
-                'retrieval_path' => 'http://www.f.internal/pki/',
-                'push'           => 'false',
-                'push_method'    => 'file',
-                'push_path'      => '\\\\www.f.internal\pki\\'
-              },
-              'outfile' => ['c:\windows\system32\certsrv\certenroll\CRLCopy.htm', '\\\\www.f.internal\pki\CRLCopy.htm']
-            }
-          }
+          node.set['crl_copy']['master_crls']['C:\Windows\System32\certsrv\CertEnroll\issuingca.crl']['cdps']['internal cdp1']['retrieval'] = 'www'
+          node.set['crl_copy']['master_crls']['C:\Windows\System32\certsrv\CertEnroll\issuingca.crl']['cdps']['internal cdp1']['retrieval_path'] = 'http://www.f.internal/pki/'
+          node.set['crl_copy']['master_crls']['C:\Windows\System32\certsrv\CertEnroll\issuingca.crl']['cdps']['internal cdp1']['push'] = 'false'
+          node.set['crl_copy']['master_crls']['C:\Windows\System32\certsrv\CertEnroll\issuingca.crl']['cdps']['internal cdp1']['push_method'] = 'file'
+          node.set['crl_copy']['master_crls']['C:\Windows\System32\certsrv\CertEnroll\issuingca.crl']['cdps']['internal cdp1']['push_path'] = '\\\\www.f.internal\pki\\'
+          node.set['crl_copy']['master_crls']['C:\Windows\System32\certsrv\CertEnroll\issuingca.crl']['outfile'] = ['c:\windows\system32\certsrv\certenroll\CRLCopy.htm', '\\\\www.f.internal\pki\CRLCopy.htm']
         end.converge(described_recipe)
       end
 
       it 'should create a crl_copy[C:\Windows\System32\certsrv\CertEnroll\issuingca.crl] resource' do
         expect(chef_run).to create_crl_copy('C:\Windows\System32\certsrv\CertEnroll\issuingca.crl').with(
-          'cdps' => {
-            'name' => 'internal cdp1',
-            'retrieval'      => 'www',
-            'retrieval_path' => 'http://www.f.internal/pki/',
-            'push'           => 'false',
-            'push_method'    => 'file',
-            'push_path'      => '\\\\www.f.internal\pki\\'
-          }
+          cdps: {
+            'internal cdp1' => {
+              'retrieval'      => 'www',
+              'retrieval_path' => 'http://www.f.internal/pki/',
+              'push'           => 'false',
+              'push_method'    => 'file',
+              'push_path'      => '\\\\www.f.internal\pki\\'
+            },
+          },
         )
       end
 
       context 'it steps into crl_copy' do
         it 'renders template C:\CrlCopy\issuingca\CRL_Config.XML' do
           expect(chef_run).to create_template('C:\CrlCopy\issuingca\CRL_Config.XML').with_variables(
-            cdps: [
-              {
-                'name'           => 'internal cdp1',
+            cdps: {
+              'internal cdp1' => {
                 'retrieval'      => 'www',
                 'retrieval_path' => 'http://www.f.internal/pki/',
                 'push'           => 'false',
                 'push_method'    => 'file',
                 'push_path'      => '\\\\www.f.internal\pki\\'
-              }
-            ],
+              },
+            },
             cluster_name: nil,
             eventvwr_event_high: 1,
             eventvwr_event_id: 5000,
@@ -953,7 +869,7 @@ describe 'crl_copy::default' do
       context 'it steps into crl_copy' do
         it 'renders template C:\CrlCopy\issuingca\CRL_Config.XML' do
           expect(chef_run).to create_template('C:\CrlCopy\issuingca\CRL_Config.XML').with_variables(
-            cdps: [nil],
+            cdps: nil,
             cluster_name: nil,
             eventvwr_event_high: 1,
             eventvwr_event_id: 5000,

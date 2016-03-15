@@ -7,17 +7,17 @@
     </master_crl>
 
     <cdps>
-        <% unless @cdps.first.nil? %>
-        <% @cdps.each do |cdp| %>
+        <% unless @cdps.nil? %>
+        <% @cdps.each do |name, cdp| %>
         <cdp>
-            <name><%= cdp['name'] %></name>
+            <name><%= name %></name>
             <retrieval><%= cdp['retrieval'] %></retrieval>
             <retrieval_path><%= cdp['retrieval_path'] %></retrieval_path>
             <push><% if cdp['push'] == true || cdp['push'] == 'true' %>true<% end %></push>  <!-- no value for FALSE -->
             <push_method><%= cdp['push_method'] %></push_method>
             <push_path><%= cdp['push_path'] %></push_path>
         </cdp>
-        <% unless cdp.equal? @cdps.last %>
+        <% unless name.equal? @cdps.keys.last %>
 
         <% end %>
         <% end %>
