@@ -24,7 +24,7 @@
 #  * zeus: 'zeus rspec' (requires the server to be started separately)
 #  * 'just' rspec: 'rspec'
 
-guard :rspec, cmd: 'clear; chef exec rspec', all_on_start: false do
+guard :rspec, cmd: 'chef exec rspec', all_on_start: false do
   watch(%r{^spec/unit/*/(.+)_spec\.rb$})
   watch(%r{^recipes/default.rb$}) { |_m| 'spec/unit/recipes/default_spec.rb' }
   watch(%r{^resources/crl_copy.rb$}) { |_m| 'spec/unit/recipes/default_spec.rb' }
