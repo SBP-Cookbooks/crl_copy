@@ -10,3 +10,5 @@ issues_url       'https://github.com/shoekstra/chef-crl_copy/issues' if respond_
 recipe           'crl_copy::default', 'Installs and configures script and scheduled task to manage CRL distribution.'
 
 supports         'windows'
+
+depends 'windows'

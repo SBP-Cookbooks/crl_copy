@@ -29,4 +29,4 @@ default['crl_copy']['smtp']['title']                 = 'CRL Copy Process Results
 default['crl_copy']['smtp']['threshold']             = 2
 
 default['crl_copy']['warnings']['threshold']         = 5
-default['crl_copy']['warnings']['threshold_unit']    = 'hours' # days, hours, minutes or seconds
+default['crl_copy']['warnings']['threshold_unit']    = 'Hours'

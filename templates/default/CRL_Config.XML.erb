@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="US-ASCII"?>
 <configuration>
     <master_crl>
-        <name>issuingca.crl</name>
+        <name><%= @crl_file %></name>
         <retrieval>file</retrieval>
-        <path>C:\Windows\System32\certsrv\CertEnroll\</path>
+        <path><%= @crl_dir %></path>
     </master_crl>
 
     <cdps>
