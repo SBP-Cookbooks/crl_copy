@@ -46,6 +46,7 @@ action :create do
   crl_dir  = crl_path.gsub(crl_file, '')
   script_dir = 'C:\CrlCopy\\' + ::File.basename(crl_file, ::File.extname(crl_file))
 
+  directory 'C:\CrlCopy'
   directory script_dir
 
   cookbook_file "#{script_dir}\\CRL_Copy.ps1" do

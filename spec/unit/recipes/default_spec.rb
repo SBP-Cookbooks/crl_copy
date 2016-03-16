@@ -103,6 +103,10 @@ describe 'crl_copy::default' do
     end
 
     context 'it steps into crl_copy[C:\Windows\System32\certsrv\CertEnroll\issuingca1.crl]' do
+      it 'creates directory C:\CrlCopy directory' do
+        expect(chef_run).to create_directory('C:\CrlCopy')
+      end
+
       it 'creates directory C:\CrlCopy\issuingca1 directory' do
         expect(chef_run).to create_directory('C:\CrlCopy\issuingca1')
       end
@@ -291,6 +295,10 @@ describe 'crl_copy::default' do
       end
 
       context 'it steps into crl_copy[C:\Windows\System32\certsrv\CertEnroll\issuingca1.crl]' do
+      it 'creates directory C:\CrlCopy directory' do
+        expect(chef_run).to create_directory('C:\CrlCopy')
+      end
+
         it 'creates directory C:\CrlCopy\issuingca1 directory' do
           expect(chef_run).to create_directory('C:\CrlCopy\issuingca1')
         end
@@ -470,6 +478,10 @@ describe 'crl_copy::default' do
       end
 
       context 'it steps into crl_copy[C:\Windows\System32\certsrv\CertEnroll\issuingca1.crl]' do
+      it 'creates directory C:\CrlCopy directory' do
+        expect(chef_run).to create_directory('C:\CrlCopy')
+      end
+
         it 'creates directory C:\CrlCopy\issuingca1 directory' do
           expect(chef_run).to create_directory('C:\CrlCopy\issuingca1')
         end
@@ -625,6 +637,10 @@ describe 'crl_copy::default' do
         end
 
         context "it steps into crl_copy[C:\\Windows\\System32\\certsrv\\CertEnroll\\#{issuingca}.crl]" do
+          it 'creates directory C:\CrlCopy directory' do
+            expect(chef_run).to create_directory('C:\CrlCopy')
+          end
+
           it "creates directory C:\\CrlCopy\\#{issuingca} directory" do
             expect(chef_run).to create_directory("C:\\CrlCopy\\#{issuingca}")
           end
