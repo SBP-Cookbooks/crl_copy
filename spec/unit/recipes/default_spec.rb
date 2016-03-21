@@ -19,7 +19,18 @@ describe 'crl_copy::default' do
       expect { chef_run }.to_not raise_error
     end
 
-    it 'installs the PSCX PowerShell module with default values' do
+    it 'installs the Mono Framework' do
+      expect(chef_run).to create_remote_file('/Chef/cache/mono.msi').with(
+        source: "http://download.mono-project.com/archive/4.2.3/windows-installer/mono-4.2.3.4-gtksharp-2.12.30-win32-0.msi"
+      )
+
+      expect(chef_run).to install_package('Mono for Windows').with(
+        source: '/Chef/cache/mono.msi',
+        installer_type: :msi
+      )
+    end
+
+    it 'installs the PSCX PowerShell module using default values' do
       expect(chef_run).to create_remote_file('/Chef/cache/pscx.msi').with(
         source: 'http://download-codeplex.sec.s-msft.com/Download/Release?ProjectName=pscx&DownloadId=923562&FileTime=130585918034470000&Build=21031'
       )
@@ -30,7 +41,7 @@ describe 'crl_copy::default' do
       )
     end
 
-    it 'installs the PSPKI PowerShell module with default values' do
+    it 'installs the PSPKI PowerShell module using default values' do
       expect(chef_run).to create_remote_file('/Chef/cache/pspki.exe').with(
         source: 'http://download-codeplex.sec.s-msft.com/Download/Release?ProjectName=pspki&DownloadId=1440723&FileTime=130716062844400000&Build=21031'
       )
@@ -76,47 +87,17 @@ describe 'crl_copy::default' do
 
     it 'should create a crl_copy[C:\Windows\System32\certsrv\CertEnroll\issuingca1.crl] resource' do
       expect(chef_run).to create_crl_copy('C:\Windows\System32\certsrv\CertEnroll\issuingca1.crl').with(
-        'cdps' => {
-          'internal cdp1' => {
-            'retrieval'      => 'www',
-            'retrieval_path' => 'http://www.f.internal/pki/',
-            'push'           => 'true',
-            'push_method'    => 'file',
-            'push_path'      => '\\\\www.f.internal\pki\\'
-          }
-        },
         'eventvwr_event_source'      => 'CRL Copy Event',
         'eventvwr_event_id'          => 6000,
         'eventvwr_event_high'        => 2,
         'eventvwr_event_warning'     => 4,
         'eventvwr_event_information' => 8,
-        'smtp_send_mail'             => false,
-        'smtp_server'                => nil,
-        'smtp_from'                  => nil,
-        'smtp_to'                    => nil,
-        'smtp_published_notify'      => false,
-        'smtp_title'                 => 'CRL Copy Process Results',
-        'smtp_threshold'             => 2,
-        'warnings_threshold'         => 5,
-        'warnings_threshold_unit'    => 'Hours'
       )
     end
 
     context 'it steps into crl_copy[C:\Windows\System32\certsrv\CertEnroll\issuingca1.crl]' do
-      it 'creates directory C:\CrlCopy directory' do
-        expect(chef_run).to create_directory('C:\CrlCopy')
-      end
-
-      it 'creates directory C:\CrlCopy\issuingca1 directory' do
-        expect(chef_run).to create_directory('C:\CrlCopy\issuingca1')
-      end
-
-      it 'creates file C:\CrlCopy\issuingca1\CRL_Copy.ps1' do
-        expect(chef_run).to create_cookbook_file('C:\CrlCopy\issuingca1\CRL_Copy.ps1')
-      end
-
-      it 'renders template C:\CrlCopy\issuingca1\CRL_Config.XML' do
-        expect(chef_run).to create_template('C:\CrlCopy\issuingca1\CRL_Config.XML').with_variables(
+      it 'should render template C:\CrlCopy\issuingca1_CRL_Config.xml' do
+        expect(chef_run).to create_template('C:\CrlCopy\issuingca1_CRL_Config.xml').with_variables(
           cdps: {
             'internal cdp1' => {
               'retrieval'      => 'www',
@@ -134,7 +115,7 @@ describe 'crl_copy::default' do
           eventvwr_event_information: 8,
           eventvwr_event_source: 'CRL Copy Event',
           eventvwr_event_warning: 4,
-          outfile: ['C:\Windows\System32\certsrv\CertEnroll\CRLCopy.htm'],
+          outfile: ['C:\CrlCopy\issuingca1_CRL_Status.htm'],
           smtp_from: nil,
           smtp_published_notify: false,
           smtp_send_mail: false,
@@ -146,60 +127,17 @@ describe 'crl_copy::default' do
           warnings_threshold_unit: 'Hours'
         )
 
-        template_content = <<-EOF.gsub(/^ {10}/, '')
-          <?xml version="1.0" encoding="US-ASCII"?>
-          <configuration>
-              <master_crl>
-                  <name>issuingca1.crl</name>
-                  <retrieval>file</retrieval>
-                  <path>C:\\Windows\\System32\\certsrv\\CertEnroll\\</path>
-              </master_crl>
-
-              <cdps>
-                  <cdp>
-                      <name>internal cdp1</name>
-                      <retrieval>www</retrieval>
-                      <retrieval_path>http://www.f.internal/pki/</retrieval_path>
-                      <push>true</push>  <!-- no value for FALSE -->
-                      <push_method>file</push_method>
-                      <push_path>\\\\www.f.internal\\pki\\</push_path>
-                  </cdp>
-              </cdps>
-
-              <SMTP>
-                  <send_SMTP></send_SMTP> <!-- no value for FALSE -->
-                  <SmtpServer></SmtpServer>
-                  <from></from>
-                  <to></to>
-                  <published_notify></published_notify> <!-- no value for FALSE -->
-                  <title>CRL Copy Process Results</title>
-                  <SMTPThreshold>2</SMTPThreshold> <!-- event level when an SMTP message is sent -->
-              </SMTP>
-
-              <eventvwr>
-                  <EventSource>CRL Copy Event</EventSource>
-                  <EventID>6000</EventID>
-                  <EventHigh>2</EventHigh>
-                  <EventWarning>4</EventWarning>
-                  <EventInformation>8</EventInformation>
-              </eventvwr>
-
-              <warnings>
-                  <threshold>5</threshold>
-                  <threshold_unit>Hours</threshold_unit> <!-- days, hours, minutes or seconds -->
-              </warnings>
-
-              <ADCS>
-                  <cluster></cluster> <!-- no value for FALSE -->
-              </ADCS>
-
-              <output>
-                  <outfile>C:\\Windows\\System32\\certsrv\\CertEnroll\\CRLCopy.htm</outfile>
-              </output>
-          </configuration>
+        template_content = <<-EOF.gsub(/^ {6}/, '')
+          <eventvwr>
+              <EventSource>CRL Copy Event</EventSource>
+              <EventID>6000</EventID>
+              <EventHigh>2</EventHigh>
+              <EventWarning>4</EventWarning>
+              <EventInformation>8</EventInformation>
+          </eventvwr>
         EOF
 
-        expect(chef_run).to render_file('C:\CrlCopy\issuingca1\CRL_Config.XML').with_content(template_content)
+        expect(chef_run).to render_file('C:\CrlCopy\issuingca1_CRL_Config.xml').with_content(template_content)
       end
     end
   end
@@ -295,20 +233,16 @@ describe 'crl_copy::default' do
       end
 
       context 'it steps into crl_copy[C:\Windows\System32\certsrv\CertEnroll\issuingca1.crl]' do
-      it 'creates directory C:\CrlCopy directory' do
-        expect(chef_run).to create_directory('C:\CrlCopy')
-      end
-
-        it 'creates directory C:\CrlCopy\issuingca1 directory' do
-          expect(chef_run).to create_directory('C:\CrlCopy\issuingca1')
+        it 'creates directory C:\CrlCopy directory' do
+          expect(chef_run).to create_directory('C:\CrlCopy')
         end
 
-        it 'creates file C:\CrlCopy\issuingca1\CRL_Copy.ps1' do
-          expect(chef_run).to create_cookbook_file('C:\CrlCopy\issuingca1\CRL_Copy.ps1')
+        it 'creates file C:\CrlCopy\CRL_Copy.ps1' do
+          expect(chef_run).to create_cookbook_file('C:\CrlCopy\CRL_Copy.ps1')
         end
 
-        it 'renders template C:\CrlCopy\issuingca1\CRL_Config.XML' do
-          expect(chef_run).to create_template('C:\CrlCopy\issuingca1\CRL_Config.XML').with_variables(
+        it 'should render template C:\CrlCopy\issuingca1_CRL_Config.xml' do
+          expect(chef_run).to create_template('C:\CrlCopy\issuingca1_CRL_Config.xml').with_variables(
             cdps: {
               'internal cdp1' => {
                 'retrieval'      => 'www',
@@ -423,7 +357,17 @@ describe 'crl_copy::default' do
             </configuration>
           EOF
 
-          expect(chef_run).to render_file('C:\CrlCopy\issuingca1\CRL_Config.XML').with_content(template_content)
+          expect(chef_run).to render_file('C:\CrlCopy\issuingca1_CRL_Config.xml').with_content(template_content)
+        end
+
+        it 'should create a windows_task[CRLCopy issuingca1.crl] resource' do
+          expect(chef_run).to create_windows_task('CRLCopy issuingca1.crl').with(
+            user: 'SYSTEM',
+            command: '%SystemRoot%\\system32\\WindowsPowerShell\\v1.0\\powershell.exe C:\\CrlCopy\\CRL_Copy.ps1 -Action Publish -XmlFile C:\\CrlCopy\\issuingca1_CRL_Config.xml',
+            run_level: :highest,
+            frequency: :minute,
+            frequency_modifier: '30'
+          )
         end
       end
     end
@@ -478,20 +422,16 @@ describe 'crl_copy::default' do
       end
 
       context 'it steps into crl_copy[C:\Windows\System32\certsrv\CertEnroll\issuingca1.crl]' do
-      it 'creates directory C:\CrlCopy directory' do
-        expect(chef_run).to create_directory('C:\CrlCopy')
-      end
-
-        it 'creates directory C:\CrlCopy\issuingca1 directory' do
-          expect(chef_run).to create_directory('C:\CrlCopy\issuingca1')
+        it 'creates directory C:\CrlCopy directory' do
+          expect(chef_run).to create_directory('C:\CrlCopy')
         end
 
-        it 'creates file C:\CrlCopy\issuingca1\CRL_Copy.ps1' do
-          expect(chef_run).to create_cookbook_file('C:\CrlCopy\issuingca1\CRL_Copy.ps1')
+        it 'creates file C:\CrlCopy\CRL_Copy.ps1' do
+          expect(chef_run).to create_cookbook_file('C:\CrlCopy\CRL_Copy.ps1')
         end
 
-        it 'renders template C:\CrlCopy\issuingca1\CRL_Config.XML' do
-          expect(chef_run).to create_template('C:\CrlCopy\issuingca1\CRL_Config.XML').with_variables(
+        it 'should render template C:\CrlCopy\issuingca1_CRL_Config.xml' do
+          expect(chef_run).to create_template('C:\CrlCopy\issuingca1_CRL_Config.xml').with_variables(
             cdps: {
               'internal cdp1' => {
                 'retrieval'      => 'www',
@@ -509,7 +449,7 @@ describe 'crl_copy::default' do
             eventvwr_event_information: 4,
             eventvwr_event_source: 'CRL Copy Process',
             eventvwr_event_warning: 2,
-            outfile: ['C:\Windows\System32\certsrv\CertEnroll\CRLCopy.htm'],
+            outfile: ['C:\CrlCopy\issuingca1_CRL_Status.htm'],
             smtp_from: nil,
             smtp_published_notify: false,
             smtp_send_mail: false,
@@ -569,12 +509,22 @@ describe 'crl_copy::default' do
                 </ADCS>
 
                 <output>
-                    <outfile>C:\\Windows\\System32\\certsrv\\CertEnroll\\CRLCopy.htm</outfile>
+                    <outfile>C:\\CrlCopy\\issuingca1_CRL_Status.htm</outfile>
                 </output>
             </configuration>
           EOF
 
-          expect(chef_run).to render_file('C:\CrlCopy\issuingca1\CRL_Config.XML').with_content(template_content)
+          expect(chef_run).to render_file('C:\CrlCopy\issuingca1_CRL_Config.xml').with_content(template_content)
+        end
+
+        it 'should create a windows_task[CRLCopy issuingca1.crl] resource' do
+          expect(chef_run).to create_windows_task('CRLCopy issuingca1.crl').with(
+            user: 'SYSTEM',
+            command: '%SystemRoot%\\system32\\WindowsPowerShell\\v1.0\\powershell.exe C:\\CrlCopy\\CRL_Copy.ps1 -Action Publish -XmlFile C:\\CrlCopy\\issuingca1_CRL_Config.xml',
+            run_level: :highest,
+            frequency: :minute,
+            frequency_modifier: '30'
+          )
         end
       end
     end
@@ -609,48 +559,12 @@ describe 'crl_copy::default' do
 
       %w(issuingca1 issuingca2).each do |issuingca|
         it "should create a crl_copy[C:\\Windows\\System32\\certsrv\\CertEnroll\\#{issuingca}.crl] resource" do
-          expect(chef_run).to create_crl_copy("C:\\Windows\\System32\\certsrv\\CertEnroll\\#{issuingca}.crl").with(
-            'cdps' => {
-              'internal cdp1' => {
-                'retrieval'      => 'www',
-                'retrieval_path' => 'http://www.f.internal/pki/',
-                'push'           => 'true',
-                'push_method'    => 'file',
-                'push_path'      => '\\\\www.f.internal\pki\\'
-              }
-            },
-            'eventvwr_event_source'      => 'CRL Copy Process',
-            'eventvwr_event_id'          => 5000,
-            'eventvwr_event_high'        => 1,
-            'eventvwr_event_warning'     => 2,
-            'eventvwr_event_information' => 4,
-            'smtp_send_mail'             => false,
-            'smtp_server'                => nil,
-            'smtp_from'                  => nil,
-            'smtp_to'                    => nil,
-            'smtp_published_notify'      => false,
-            'smtp_title'                 => 'CRL Copy Process Results',
-            'smtp_threshold'             => 2,
-            'warnings_threshold'         => 5,
-            'warnings_threshold_unit'    => 'Hours'
-          )
+          expect(chef_run).to create_crl_copy("C:\\Windows\\System32\\certsrv\\CertEnroll\\#{issuingca}.crl")
         end
 
         context "it steps into crl_copy[C:\\Windows\\System32\\certsrv\\CertEnroll\\#{issuingca}.crl]" do
-          it 'creates directory C:\CrlCopy directory' do
-            expect(chef_run).to create_directory('C:\CrlCopy')
-          end
-
-          it "creates directory C:\\CrlCopy\\#{issuingca} directory" do
-            expect(chef_run).to create_directory("C:\\CrlCopy\\#{issuingca}")
-          end
-
-          it "creates file C:\\CrlCopy\\#{issuingca}\\CRL_Copy.ps1" do
-            expect(chef_run).to create_cookbook_file("C:\\CrlCopy\\#{issuingca}\\CRL_Copy.ps1")
-          end
-
-          it "renders template C:\\CrlCopy\\#{issuingca}\\CRL_Config.XML" do
-            expect(chef_run).to create_template("C:\\CrlCopy\\#{issuingca}\\CRL_Config.XML").with_variables(
+          it "should render template C:\\CrlCopy\\#{issuingca}_CRL_Config.xml" do
+            expect(chef_run).to create_template("C:\\CrlCopy\\#{issuingca}_CRL_Config.xml").with_variables(
               cdps: {
                 'internal cdp1' => {
                   'retrieval'      => 'www',
@@ -668,7 +582,7 @@ describe 'crl_copy::default' do
               eventvwr_event_information: 4,
               eventvwr_event_source: 'CRL Copy Process',
               eventvwr_event_warning: 2,
-              outfile: ['C:\Windows\System32\certsrv\CertEnroll\CRLCopy.htm'],
+              outfile: ["C:\\CrlCopy\\#{issuingca}_CRL_Status.htm"],
               smtp_from: nil,
               smtp_published_notify: false,
               smtp_send_mail: false,
@@ -680,60 +594,29 @@ describe 'crl_copy::default' do
               warnings_threshold_unit: 'Hours'
             )
 
-            template_content = <<-EOF.gsub(/^ {14}/, '')
-              <?xml version="1.0" encoding="US-ASCII"?>
-              <configuration>
-                  <master_crl>
-                      <name>#{issuingca}.crl</name>
-                      <retrieval>file</retrieval>
-                      <path>C:\\Windows\\System32\\certsrv\\CertEnroll\\</path>
-                  </master_crl>
-
-                  <cdps>
-                      <cdp>
-                          <name>internal cdp1</name>
-                          <retrieval>www</retrieval>
-                          <retrieval_path>http://www.f.internal/pki/</retrieval_path>
-                          <push>true</push>  <!-- no value for FALSE -->
-                          <push_method>file</push_method>
-                          <push_path>\\\\www.f.internal\\pki\\</push_path>
-                      </cdp>
-                  </cdps>
-
-                  <SMTP>
-                      <send_SMTP></send_SMTP> <!-- no value for FALSE -->
-                      <SmtpServer></SmtpServer>
-                      <from></from>
-                      <to></to>
-                      <published_notify></published_notify> <!-- no value for FALSE -->
-                      <title>CRL Copy Process Results</title>
-                      <SMTPThreshold>2</SMTPThreshold> <!-- event level when an SMTP message is sent -->
-                  </SMTP>
-
-                  <eventvwr>
-                      <EventSource>CRL Copy Process</EventSource>
-                      <EventID>5000</EventID>
-                      <EventHigh>1</EventHigh>
-                      <EventWarning>2</EventWarning>
-                      <EventInformation>4</EventInformation>
-                  </eventvwr>
-
-                  <warnings>
-                      <threshold>5</threshold>
-                      <threshold_unit>Hours</threshold_unit> <!-- days, hours, minutes or seconds -->
-                  </warnings>
-
-                  <ADCS>
-                      <cluster></cluster> <!-- no value for FALSE -->
-                  </ADCS>
-
-                  <output>
-                      <outfile>C:\\Windows\\System32\\certsrv\\CertEnroll\\CRLCopy.htm</outfile>
-                  </output>
-              </configuration>
+            template_content = <<-EOF.gsub(/^ {10}/, '')
+              <master_crl>
+                  <name>#{issuingca}.crl</name>
+                  <retrieval>file</retrieval>
+                  <path>C:\\Windows\\System32\\certsrv\\CertEnroll\\</path>
+              </master_crl>
             EOF
 
-            expect(chef_run).to render_file("C:\\CrlCopy\\#{issuingca}\\CRL_Config.XML").with_content(template_content)
+            expect(chef_run).to render_file("C:\\CrlCopy\\#{issuingca}_CRL_Config.xml").with_content(template_content)
+
+            template_content = <<-EOF.gsub(/^ {10}/, '')
+              <output>
+                  <outfile>C:\\CrlCopy\\#{issuingca}_CRL_Status.htm</outfile>
+              </output>
+            EOF
+
+            expect(chef_run).to render_file("C:\\CrlCopy\\#{issuingca}_CRL_Config.xml").with_content(template_content)
+          end
+
+          it "should create a windows_task[CRLCopy #{issuingca}.crl] resource" do
+            expect(chef_run).to create_windows_task("CRLCopy #{issuingca}.crl").with(
+              command: "%SystemRoot%\\system32\\WindowsPowerShell\\v1.0\\powershell.exe C:\\CrlCopy\\CRL_Copy.ps1 -Action Publish -XmlFile C:\\CrlCopy\\#{issuingca}_CRL_Config.xml",
+            )
           end
         end
       end
@@ -754,7 +637,18 @@ describe 'crl_copy::default' do
       expect { chef_run }.to_not raise_error
     end
 
-    it 'installs the PSCX PowerShell module with specified source and package name' do
+    it 'installs the Mono Framework' do
+      expect(chef_run).to create_remote_file('/Chef/cache/mono.msi').with(
+        source: "http://download.mono-project.com/archive/4.2.3/windows-installer/mono-4.2.3.4-gtksharp-2.12.30-win32-0.msi"
+      )
+
+      expect(chef_run).to install_package('Mono for Windows').with(
+        source: '/Chef/cache/mono.msi',
+        installer_type: :msi
+      )
+    end
+
+    it 'installs the PSCX PowerShell module using default values' do
       expect(chef_run).to create_remote_file('/Chef/cache/pscx.msi').with(
         source: 'http://test'
       )
@@ -765,7 +659,7 @@ describe 'crl_copy::default' do
       )
     end
 
-    it 'installs the PSPKI PowerShell module with specified source and package name' do
+    it 'installs the PSPKI PowerShell module using default values' do
       expect(chef_run).to create_remote_file('/Chef/cache/pspki.exe').with(
         source: 'http://test'
       )
@@ -775,10 +669,6 @@ describe 'crl_copy::default' do
         installer_type: :custom,
         options: '/quiet'
       )
-    end
-
-    it 'should write warning' do
-      expect(chef_run).to write_log('crl_copy::default: No master CRLs specified, skipping crl_copy resource.').with(level: :warn)
     end
   end
 
@@ -807,26 +697,8 @@ describe 'crl_copy::default' do
       expect { chef_run }.to_not raise_error
     end
 
-    it 'should not write warning' do
-      expect(chef_run).to_not write_log('crl_copy::default: No master CRLs specified, skipping crl_copy resource.').with(level: :warn)
-    end
-
-    it 'should create a crl_copy[C:\Windows\System32\certsrv\CertEnroll\issuingca1.crl] resource' do
+    it 'should create a crl_copy[C:\Windows\System32\certsrv\CertEnroll\issuingca1.crl] resource with expected attributes' do
       expect(chef_run).to create_crl_copy('C:\Windows\System32\certsrv\CertEnroll\issuingca1.crl').with(
-        'cdps' => {
-          'internal cdp1' => {
-            'retrieval'      => 'www',
-            'retrieval_path' => 'http://www.f.internal/pki/',
-            'push'           => 'true',
-            'push_method'    => 'file',
-            'push_path'      => '\\\\www.f.internal\pki\\'
-          }
-        },
-        'eventvwr_event_source'      => 'CRL Copy Process',
-        'eventvwr_event_id'          => 5000,
-        'eventvwr_event_high'        => 1,
-        'eventvwr_event_warning'     => 2,
-        'eventvwr_event_information' => 4,
         'smtp_send_mail'             => true,
         'smtp_server'                => 'exchange.f.internal',
         'smtp_from'                  => 'crlcopy@f.internal',
@@ -834,22 +706,12 @@ describe 'crl_copy::default' do
         'smtp_published_notify'      => true,
         'smtp_title'                 => 'CRL Copy Process Results',
         'smtp_threshold'             => 2,
-        'warnings_threshold'         => 5,
-        'warnings_threshold_unit'    => 'Hours'
       )
     end
 
     context 'it steps into crl_copy[C:\Windows\System32\certsrv\CertEnroll\issuingca1.crl]' do
-      it 'creates directory C:\CrlCopy\issuingca1 directory' do
-        expect(chef_run).to create_directory('C:\CrlCopy\issuingca1')
-      end
-
-      it 'creates file C:\CrlCopy\issuingca1\CRL_Copy.ps1' do
-        expect(chef_run).to create_cookbook_file('C:\CrlCopy\issuingca1\CRL_Copy.ps1')
-      end
-
-      it 'renders template C:\CrlCopy\issuingca1\CRL_Config.XML' do
-        expect(chef_run).to create_template('C:\CrlCopy\issuingca1\CRL_Config.XML').with_variables(
+      it 'should render template C:\CrlCopy\issuingca1_CRL_Config.xml with expected values' do
+        expect(chef_run).to create_template('C:\CrlCopy\issuingca1_CRL_Config.xml').with_variables(
           cdps: {
             'internal cdp1' => {
               'retrieval'      => 'www',
@@ -867,7 +729,7 @@ describe 'crl_copy::default' do
           eventvwr_event_information: 4,
           eventvwr_event_source: 'CRL Copy Process',
           eventvwr_event_warning: 2,
-          outfile: ['C:\Windows\System32\certsrv\CertEnroll\CRLCopy.htm'],
+          outfile: ['C:\CrlCopy\issuingca1_CRL_Status.htm'],
           smtp_from: 'crlcopy@f.internal',
           smtp_published_notify: true,
           smtp_send_mail: true,
@@ -879,60 +741,19 @@ describe 'crl_copy::default' do
           warnings_threshold_unit: 'Hours'
         )
 
-        template_content = <<-EOF.gsub(/^ {10}/, '')
-          <?xml version="1.0" encoding="US-ASCII"?>
-          <configuration>
-              <master_crl>
-                  <name>issuingca1.crl</name>
-                  <retrieval>file</retrieval>
-                  <path>C:\\Windows\\System32\\certsrv\\CertEnroll\\</path>
-              </master_crl>
-
-              <cdps>
-                  <cdp>
-                      <name>internal cdp1</name>
-                      <retrieval>www</retrieval>
-                      <retrieval_path>http://www.f.internal/pki/</retrieval_path>
-                      <push>true</push>  <!-- no value for FALSE -->
-                      <push_method>file</push_method>
-                      <push_path>\\\\www.f.internal\\pki\\</push_path>
-                  </cdp>
-              </cdps>
-
-              <SMTP>
-                  <send_SMTP>true</send_SMTP> <!-- no value for FALSE -->
-                  <SmtpServer>exchange.f.internal</SmtpServer>
-                  <from>crlcopy@f.internal</from>
-                  <to>pfox@f.internal,pierref@f.internal</to>
-                  <published_notify>true</published_notify> <!-- no value for FALSE -->
-                  <title>CRL Copy Process Results</title>
-                  <SMTPThreshold>2</SMTPThreshold> <!-- event level when an SMTP message is sent -->
-              </SMTP>
-
-              <eventvwr>
-                  <EventSource>CRL Copy Process</EventSource>
-                  <EventID>5000</EventID>
-                  <EventHigh>1</EventHigh>
-                  <EventWarning>2</EventWarning>
-                  <EventInformation>4</EventInformation>
-              </eventvwr>
-
-              <warnings>
-                  <threshold>5</threshold>
-                  <threshold_unit>Hours</threshold_unit> <!-- days, hours, minutes or seconds -->
-              </warnings>
-
-              <ADCS>
-                  <cluster></cluster> <!-- no value for FALSE -->
-              </ADCS>
-
-              <output>
-                  <outfile>C:\\Windows\\System32\\certsrv\\CertEnroll\\CRLCopy.htm</outfile>
-              </output>
-          </configuration>
+        template_content = <<-EOF.gsub(/^ {6}/, '')
+          <SMTP>
+              <send_SMTP>true</send_SMTP> <!-- no value for FALSE -->
+              <SmtpServer>exchange.f.internal</SmtpServer>
+              <from>crlcopy@f.internal</from>
+              <to>pfox@f.internal,pierref@f.internal</to>
+              <published_notify>true</published_notify> <!-- no value for FALSE -->
+              <title>CRL Copy Process Results</title>
+              <SMTPThreshold>2</SMTPThreshold> <!-- event level when an SMTP message is sent -->
+          </SMTP>
         EOF
 
-        expect(chef_run).to render_file('C:\CrlCopy\issuingca1\CRL_Config.XML').with_content(template_content)
+        expect(chef_run).to render_file('C:\CrlCopy\issuingca1_CRL_Config.xml').with_content(template_content)
       end
     end
   end
@@ -957,49 +778,16 @@ describe 'crl_copy::default' do
       expect { chef_run }.to_not raise_error
     end
 
-    it 'should not write warning' do
-      expect(chef_run).to_not write_log('crl_copy::default: No master CRLs specified, skipping crl_copy resource.').with(level: :warn)
-    end
-
-    it 'should create a crl_copy[C:\Windows\System32\certsrv\CertEnroll\issuingca1.crl] resource' do
+    it 'should create a crl_copy[C:\Windows\System32\certsrv\CertEnroll\issuingca1.crl] resource with expected attributes' do
       expect(chef_run).to create_crl_copy('C:\Windows\System32\certsrv\CertEnroll\issuingca1.crl').with(
-        'cdps' => {
-          'internal cdp1' => {
-            'retrieval'      => 'www',
-            'retrieval_path' => 'http://www.f.internal/pki/',
-            'push'           => 'true',
-            'push_method'    => 'file',
-            'push_path'      => '\\\\www.f.internal\pki\\'
-          }
-        },
-        'eventvwr_event_source'      => 'CRL Copy Process',
-        'eventvwr_event_id'          => 5000,
-        'eventvwr_event_high'        => 1,
-        'eventvwr_event_warning'     => 2,
-        'eventvwr_event_information' => 4,
-        'smtp_send_mail'             => false,
-        'smtp_server'                => nil,
-        'smtp_from'                  => nil,
-        'smtp_to'                    => nil,
-        'smtp_published_notify'      => false,
-        'smtp_title'                 => 'CRL Copy Process Results',
-        'smtp_threshold'             => 2,
         'warnings_threshold'         => 60,
         'warnings_threshold_unit'    => 'Minutes'
       )
     end
 
     context 'it steps into crl_copy[C:\Windows\System32\certsrv\CertEnroll\issuingca1.crl]' do
-      it 'creates directory C:\CrlCopy\issuingca1 directory' do
-        expect(chef_run).to create_directory('C:\CrlCopy\issuingca1')
-      end
-
-      it 'creates file C:\CrlCopy\issuingca1\CRL_Copy.ps1' do
-        expect(chef_run).to create_cookbook_file('C:\CrlCopy\issuingca1\CRL_Copy.ps1')
-      end
-
-      it 'renders template C:\CrlCopy\issuingca1\CRL_Config.XML' do
-        expect(chef_run).to create_template('C:\CrlCopy\issuingca1\CRL_Config.XML').with_variables(
+      it 'should render template C:\CrlCopy\issuingca1_CRL_Config.xml with expected values' do
+        expect(chef_run).to create_template('C:\CrlCopy\issuingca1_CRL_Config.xml').with_variables(
           cdps: {
             'internal cdp1' => {
               'retrieval'      => 'www',
@@ -1017,7 +805,7 @@ describe 'crl_copy::default' do
           eventvwr_event_information: 4,
           eventvwr_event_source: 'CRL Copy Process',
           eventvwr_event_warning: 2,
-          outfile: ['C:\Windows\System32\certsrv\CertEnroll\CRLCopy.htm'],
+          outfile: ['C:\CrlCopy\issuingca1_CRL_Status.htm'],
           smtp_from: nil,
           smtp_published_notify: false,
           smtp_send_mail: false,
@@ -1029,60 +817,50 @@ describe 'crl_copy::default' do
           warnings_threshold_unit: 'Minutes'
         )
 
-        template_content = <<-EOF.gsub(/^ {10}/, '')
-          <?xml version="1.0" encoding="US-ASCII"?>
-          <configuration>
-              <master_crl>
-                  <name>issuingca1.crl</name>
-                  <retrieval>file</retrieval>
-                  <path>C:\\Windows\\System32\\certsrv\\CertEnroll\\</path>
-              </master_crl>
-
-              <cdps>
-                  <cdp>
-                      <name>internal cdp1</name>
-                      <retrieval>www</retrieval>
-                      <retrieval_path>http://www.f.internal/pki/</retrieval_path>
-                      <push>true</push>  <!-- no value for FALSE -->
-                      <push_method>file</push_method>
-                      <push_path>\\\\www.f.internal\\pki\\</push_path>
-                  </cdp>
-              </cdps>
-
-              <SMTP>
-                  <send_SMTP></send_SMTP> <!-- no value for FALSE -->
-                  <SmtpServer></SmtpServer>
-                  <from></from>
-                  <to></to>
-                  <published_notify></published_notify> <!-- no value for FALSE -->
-                  <title>CRL Copy Process Results</title>
-                  <SMTPThreshold>2</SMTPThreshold> <!-- event level when an SMTP message is sent -->
-              </SMTP>
-
-              <eventvwr>
-                  <EventSource>CRL Copy Process</EventSource>
-                  <EventID>5000</EventID>
-                  <EventHigh>1</EventHigh>
-                  <EventWarning>2</EventWarning>
-                  <EventInformation>4</EventInformation>
-              </eventvwr>
-
-              <warnings>
-                  <threshold>60</threshold>
-                  <threshold_unit>Minutes</threshold_unit> <!-- days, hours, minutes or seconds -->
-              </warnings>
-
-              <ADCS>
-                  <cluster></cluster> <!-- no value for FALSE -->
-              </ADCS>
-
-              <output>
-                  <outfile>C:\\Windows\\System32\\certsrv\\CertEnroll\\CRLCopy.htm</outfile>
-              </output>
-          </configuration>
+        template_content = <<-EOF.gsub(/^ {6}/, '')
+          <warnings>
+              <threshold>60</threshold>
+              <threshold_unit>Minutes</threshold_unit> <!-- days, hours, minutes or seconds -->
+          </warnings>
         EOF
 
-        expect(chef_run).to render_file('C:\CrlCopy\issuingca1\CRL_Config.XML').with_content(template_content)
+        expect(chef_run).to render_file('C:\CrlCopy\issuingca1_CRL_Config.xml').with_content(template_content)
+      end
+    end
+  end
+
+  describe "when specifying the ['crl_copy']['windows_task'] attributes" do
+    cached(:chef_run) do
+      ChefSpec::SoloRunner.new(file_cache_path: '/Chef/cache', step_into: :crl_copy) do |node|
+        node.set['crl_copy']['windows_task']['frequency']          = 'Daily'
+        node.set['crl_copy']['windows_task']['frequency_modifier'] = '1'
+        node.set['crl_copy']['windows_task']['password']           = 'Password'
+        node.set['crl_copy']['windows_task']['user']               = 'Username'
+
+        node.set['crl_copy']['master_crls']['C:\Windows\System32\certsrv\CertEnroll\issuingca1.crl'].tap do |master_crl|
+          master_crl['cdps']['internal cdp1']['retrieval'] = 'www'
+          master_crl['cdps']['internal cdp1']['retrieval_path'] = 'http://www.f.internal/pki/'
+          master_crl['cdps']['internal cdp1']['push'] = 'true'
+          master_crl['cdps']['internal cdp1']['push_method'] = 'file'
+          master_crl['cdps']['internal cdp1']['push_path'] = '\\\\www.f.internal\pki\\'
+        end
+      end.converge(described_recipe)
+    end
+
+    it 'should converge successfully' do
+      expect { chef_run }.to_not raise_error
+    end
+
+    context 'it steps into crl_copy[C:\Windows\System32\certsrv\CertEnroll\issuingca1.crl]' do
+      it 'should create a windows_task[CRLCopy issuingca1.crl] resource with expected attributes' do
+        expect(chef_run).to create_windows_task('CRLCopy issuingca1.crl').with(
+          user: 'Username',
+          password: 'Password',
+          command: '%SystemRoot%\system32\WindowsPowerShell\v1.0\powershell.exe C:\CrlCopy\CRL_Copy.ps1 -Action Publish -XmlFile C:\CrlCopy\issuingca1_CRL_Config.xml',
+          run_level: :highest,
+          frequency: :daily,
+          frequency_modifier: '1'
+        )
       end
     end
   end
