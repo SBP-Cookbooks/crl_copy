@@ -7,6 +7,15 @@
 # Created by: Stephen Hoekstra <shoekstra@schubergphilis.com>
 #
 
+remote_file "#{Chef::Config['file_cache_path']}/mono.msi" do
+  source "http://download.mono-project.com/archive/4.2.3/windows-installer/mono-4.2.3.4-gtksharp-2.12.30-win32-0.msi"
+end
+
+package 'Mono for Windows' do
+  source "#{Chef::Config['file_cache_path']}/mono.msi"
+  installer_type :msi
+end
+
 remote_file "#{Chef::Config['file_cache_path']}/pscx.msi" do
   source node['crl_copy']['pscx']['source_url']
 end
