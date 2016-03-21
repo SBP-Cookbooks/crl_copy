@@ -36,6 +36,11 @@ property :smtp_to, kind_of: [Array, String], required: false, default: lazy { no
 property :warnings_threshold, kind_of: [Fixnum, String], required: false, default: lazy { node['crl_copy']['warnings']['threshold'] }
 property :warnings_threshold_unit, kind_of: String, required: false, default: lazy { node['crl_copy']['warnings']['threshold_unit'] }, regex: /^(Days|Hours|Minutes|Seconds)$/i
 
+property :windows_task_frequency, kind_of: String, required: false, default: lazy { node['crl_copy']['windows_task']['frequency'] }, regex: /^(Monthly|Weekly|Daily|Hourly|Minute)$/i
+property :windows_task_frequency_modifier, kind_of: [Fixnum, String], required: false, default: lazy { node['crl_copy']['windows_task']['frequency_modifier'] }
+property :windows_task_password, kind_of: String, required: false, default: lazy { node['crl_copy']['windows_task']['password'] }
+property :windows_task_user, kind_of: String, required: false, default: lazy { node['crl_copy']['windows_task']['user'] }
+
 action :create do
   #
   # Install and configure the CRL Copy script
@@ -47,20 +52,19 @@ action :create do
   script_dir = 'C:\CrlCopy\\' + ::File.basename(crl_file, ::File.extname(crl_file))
 
   directory 'C:\CrlCopy'
-  directory script_dir
 
-  cookbook_file "#{script_dir}\\CRL_Copy.ps1" do
+  cookbook_file 'C:\CrlCopy\CRL_Copy.ps1' do
     source 'CRL_Copy.ps1'
   end
 
   outfile = new_resource.outfile
-  outfile = crl_dir + "CRLCopy.htm" if outfile.nil?
+  outfile = 'C:\CrlCopy' + "\\#{::File.basename(crl_file, ::File.extname(crl_file))}_CRL_Status.htm" if outfile.nil?
   outfile = [outfile] unless outfile.is_a?(Array)
 
   smtp_to = new_resource.smtp_to
   smtp_to = [smtp_to] unless smtp_to.is_a?(Array)
 
-  template "#{script_dir}\\CRL_Config.XML" do
+  template "C:\\CrlCopy\\#{::File.basename(crl_file, ::File.extname(crl_file))}_CRL_Config.xml" do
     source 'CRL_Config.XML.erb'
     variables(
       cdps: new_resource.cdps,
@@ -83,6 +87,15 @@ action :create do
       warnings_threshold: new_resource.warnings_threshold,
       warnings_threshold_unit: new_resource.warnings_threshold_unit.downcase.capitalize
     )
+  end
+
+  windows_task "CRLCopy #{crl_file}" do
+    user new_resource.windows_task_user
+    password new_resource.windows_task_password if new_resource.windows_task_password
+    command "%SystemRoot%\\system32\\WindowsPowerShell\\v1.0\\powershell.exe C:\\CrlCopy\\CRL_Copy.ps1 -Action Publish -XmlFile C:\\CrlCopy\\#{::File.basename(crl_file, ::File.extname(crl_file))}_CRL_Config.xml"
+    run_level :highest
+    frequency new_resource.windows_task_frequency.downcase.to_sym
+    frequency_modifier new_resource.windows_task_frequency_modifier
   end
 end
 

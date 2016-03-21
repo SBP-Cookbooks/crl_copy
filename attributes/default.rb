@@ -30,3 +30,8 @@ default['crl_copy']['smtp']['threshold']             = 2
 
 default['crl_copy']['warnings']['threshold']         = 5
 default['crl_copy']['warnings']['threshold_unit']    = 'Hours'
+
+default['crl_copy']['windows_task']['frequency']          = 'Minute'
+default['crl_copy']['windows_task']['frequency_modifier'] = '30'
+default['crl_copy']['windows_task']['password']           = nil
+default['crl_copy']['windows_task']['user']               = 'SYSTEM'
