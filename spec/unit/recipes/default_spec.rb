@@ -344,7 +344,7 @@ describe 'crl_copy::default' do
             command: '%SystemRoot%\\system32\\WindowsPowerShell\\v1.0\\powershell.exe C:\\CrlCopy\\CRL_Copy.ps1 -Action Publish -XmlFile C:\\CrlCopy\\issuingca1_CRL_Config.xml',
             run_level: :highest,
             frequency: :minute,
-            frequency_modifier: '30'
+            frequency_modifier: 30
           )
         end
       end
@@ -501,7 +501,7 @@ describe 'crl_copy::default' do
             command: '%SystemRoot%\\system32\\WindowsPowerShell\\v1.0\\powershell.exe C:\\CrlCopy\\CRL_Copy.ps1 -Action Publish -XmlFile C:\\CrlCopy\\issuingca1_CRL_Config.xml',
             run_level: :highest,
             frequency: :minute,
-            frequency_modifier: '30'
+            frequency_modifier: 30
           )
         end
       end
@@ -813,7 +813,7 @@ describe 'crl_copy::default' do
           command: '%SystemRoot%\system32\WindowsPowerShell\v1.0\powershell.exe C:\CrlCopy\CRL_Copy.ps1 -Action Publish -XmlFile C:\CrlCopy\issuingca1_CRL_Config.xml',
           run_level: :highest,
           frequency: :daily,
-          frequency_modifier: '1'
+          frequency_modifier: 1
         )
       end
     end

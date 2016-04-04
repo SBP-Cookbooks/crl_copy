@@ -95,7 +95,7 @@ action :create do
     command "%SystemRoot%\\system32\\WindowsPowerShell\\v1.0\\powershell.exe C:\\CrlCopy\\CRL_Copy.ps1 -Action Publish -XmlFile C:\\CrlCopy\\#{::File.basename(crl_file, ::File.extname(crl_file))}_CRL_Config.xml"
     run_level :highest
     frequency new_resource.windows_task_frequency.downcase.to_sym
-    frequency_modifier new_resource.windows_task_frequency_modifier
+    frequency_modifier new_resource.windows_task_frequency_modifier.to_i
   end
 end
 
