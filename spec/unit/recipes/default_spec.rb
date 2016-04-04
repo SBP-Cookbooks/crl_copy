@@ -19,28 +19,6 @@ describe 'crl_copy::default' do
       expect { chef_run }.to_not raise_error
     end
 
-    it 'installs the Mono Framework' do
-      expect(chef_run).to create_remote_file('/Chef/cache/mono.msi').with(
-        source: "http://download.mono-project.com/archive/4.2.3/windows-installer/mono-4.2.3.4-gtksharp-2.12.30-win32-0.msi"
-      )
-
-      expect(chef_run).to install_package('Mono for Windows').with(
-        source: '/Chef/cache/mono.msi',
-        installer_type: :msi
-      )
-    end
-
-    it 'installs the PSCX PowerShell module using default values' do
-      expect(chef_run).to create_remote_file('/Chef/cache/pscx.msi').with(
-        source: 'http://download-codeplex.sec.s-msft.com/Download/Release?ProjectName=pscx&DownloadId=923562&FileTime=130585918034470000&Build=21031'
-      )
-
-      expect(chef_run).to install_package('PowerShell Community Extensions 3.2.0').with(
-        source: '/Chef/cache/pscx.msi',
-        installer_type: :msi
-      )
-    end
-
     it 'installs the PSPKI PowerShell module using default values' do
       expect(chef_run).to create_remote_file('/Chef/cache/pspki.exe').with(
         source: 'http://download-codeplex.sec.s-msft.com/Download/Release?ProjectName=pspki&DownloadId=1440723&FileTime=130716062844400000&Build=21031'
@@ -623,11 +601,9 @@ describe 'crl_copy::default' do
     end
   end
 
-  describe "when specifying ['crl_copy']['pscx'] and ['crl_copy']['pspki'] attributes" do
+  describe "when specifying ['crl_copy']['pspki'] attributes" do
     let(:chef_run) do
       ChefSpec::SoloRunner.new(file_cache_path: '/Chef/cache') do |node|
-        node.set['crl_copy']['pscx']['package_name']  = 'pscx package name'
-        node.set['crl_copy']['pscx']['source_url']    = 'http://test'
         node.set['crl_copy']['pspki']['package_name'] = 'pspki package name'
         node.set['crl_copy']['pspki']['source_name']  = 'http://test'
       end.converge(described_recipe)
@@ -635,28 +611,6 @@ describe 'crl_copy::default' do
 
     it 'converge successfully' do
       expect { chef_run }.to_not raise_error
-    end
-
-    it 'installs the Mono Framework' do
-      expect(chef_run).to create_remote_file('/Chef/cache/mono.msi').with(
-        source: "http://download.mono-project.com/archive/4.2.3/windows-installer/mono-4.2.3.4-gtksharp-2.12.30-win32-0.msi"
-      )
-
-      expect(chef_run).to install_package('Mono for Windows').with(
-        source: '/Chef/cache/mono.msi',
-        installer_type: :msi
-      )
-    end
-
-    it 'installs the PSCX PowerShell module using default values' do
-      expect(chef_run).to create_remote_file('/Chef/cache/pscx.msi').with(
-        source: 'http://test'
-      )
-
-      expect(chef_run).to install_package('pscx package name').with(
-        source: '/Chef/cache/pscx.msi',
-        installer_type: :msi
-      )
     end
 
     it 'installs the PSPKI PowerShell module using default values' do
