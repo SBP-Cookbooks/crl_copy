@@ -49,8 +49,8 @@ action :create do
   #
   directory 'C:\CrlCopy'
 
-  cookbook_file 'C:\CrlCopy\CRL_Copy.ps1' do
-    source 'CRL_Copy.ps1'
+  cookbook_file 'C:\CrlCopy\crl_copy_v3.ps1' do
+    source 'crl_copy_v3.ps1'
   end
 
   crl_paths = [win_friendly_path(new_resource.master_crl)]
@@ -95,7 +95,7 @@ action :create do
     windows_task "CRLCopy #{crl_file}" do
       user new_resource.windows_task_user
       password new_resource.windows_task_password if new_resource.windows_task_password
-      command "%SystemRoot%\\system32\\WindowsPowerShell\\v1.0\\powershell.exe C:\\CrlCopy\\CRL_Copy.ps1 -Action Publish -XmlFile C:\\CrlCopy\\#{::File.basename(crl_file, ::File.extname(crl_file))}_CRL_Config.xml"
+      command "%SystemRoot%\\system32\\WindowsPowerShell\\v1.0\\powershell.exe C:\\CrlCopy\\crl_copy_v3.ps1 -Action Publish -XmlFile C:\\CrlCopy\\#{::File.basename(crl_file, ::File.extname(crl_file))}_CRL_Config.xml"
       run_level :highest
       frequency new_resource.windows_task_frequency.downcase.to_sym
       frequency_modifier new_resource.windows_task_frequency_modifier.to_i

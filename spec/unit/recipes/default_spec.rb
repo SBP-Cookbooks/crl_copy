@@ -27,8 +27,8 @@ shared_examples_for 'installs CRL Copy and config xml' do
       expect(chef_run).to create_directory('C:\CrlCopy')
     end
 
-    it 'creates file C:\CrlCopy\CRL_Copy.ps1' do
-      expect(chef_run).to create_cookbook_file('C:\CrlCopy\CRL_Copy.ps1')
+    it 'creates file C:\CrlCopy\crl_copy_v3.ps1' do
+      expect(chef_run).to create_cookbook_file('C:\CrlCopy\crl_copy_v3.ps1')
     end
 
     it "should render template C:\\CrlCopy\\#{@crl_name}_CRL_Config.xml" do
@@ -199,7 +199,7 @@ describe 'crl_copy::default' do
   let(:windows_task_attributes_default) do
     {
       user: 'SYSTEM',
-      command: "%SystemRoot%\\system32\\WindowsPowerShell\\v1.0\\powershell.exe C:\\CrlCopy\\CRL_Copy.ps1 -Action Publish -XmlFile C:\\CrlCopy\\#{crl_name}_CRL_Config.xml",
+      command: "%SystemRoot%\\system32\\WindowsPowerShell\\v1.0\\powershell.exe C:\\CrlCopy\\crl_copy_v3.ps1 -Action Publish -XmlFile C:\\CrlCopy\\#{crl_name}_CRL_Config.xml",
       run_level: :highest,
       frequency: :minute,
       frequency_modifier: 30
@@ -545,8 +545,8 @@ describe 'crl_copy::default' do
         expect(chef_run).to create_directory('C:\CrlCopy')
       end
 
-      it 'creates file C:\CrlCopy\CRL_Copy.ps1' do
-        expect(chef_run).to create_cookbook_file('C:\CrlCopy\CRL_Copy.ps1')
+      it 'creates file C:\CrlCopy\crl_copy_v3.ps1' do
+        expect(chef_run).to create_cookbook_file('C:\CrlCopy\crl_copy_v3.ps1')
       end
 
       it "should render template C:\\CrlCopy\\#{@crl_name}+_CRL_Config.xml" do
@@ -585,7 +585,7 @@ describe 'crl_copy::default' do
 
       it "should create a windows_task[CRLCopy #{@crl_name}+.crl] resource" do
         expect(chef_run).to create_windows_task("CRLCopy #{crl_name}+.crl").with(windows_task_attributes_default.merge(
-          command: '%SystemRoot%\system32\WindowsPowerShell\v1.0\powershell.exe C:\CrlCopy\CRL_Copy.ps1 -Action Publish -XmlFile C:\CrlCopy\issuingca1+_CRL_Config.xml',
+          command: '%SystemRoot%\system32\WindowsPowerShell\v1.0\powershell.exe C:\CrlCopy\crl_copy_v3.ps1 -Action Publish -XmlFile C:\CrlCopy\issuingca1+_CRL_Config.xml',
         ))
       end
     end
@@ -767,7 +767,7 @@ describe 'crl_copy::default' do
       windows_task_attributes_default.merge(
           user: 'Username',
           password: 'Password',
-          command: '%SystemRoot%\system32\WindowsPowerShell\v1.0\powershell.exe C:\CrlCopy\CRL_Copy.ps1 -Action Publish -XmlFile C:\CrlCopy\issuingca1_CRL_Config.xml',
+          command: '%SystemRoot%\system32\WindowsPowerShell\v1.0\powershell.exe C:\CrlCopy\crl_copy_v3.ps1 -Action Publish -XmlFile C:\CrlCopy\issuingca1_CRL_Config.xml',
           run_level: :highest,
           frequency: :daily,
           frequency_modifier: 1

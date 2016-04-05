@@ -1,8 +1,8 @@
 #
-# Title: CRL_Copy_v2.ps1
-# Date: 5/8/2013
+# Title: CRL_Copy_v3.ps1
+# Date: 6/2/2014
 # Author: Paul Fox (MCS)
-# Copyright Microsoft Corporation @2013
+# Copyright Microsoft Corporation @2014
 #
 # Description: This script monitors the remaining lifetime of a CRL, publishes a CRL to a UNC and\or NTFS location and sends notifications via SMTP and EventLog.
 #              There are two input arguments:
@@ -11,33 +11,40 @@
 #                        Master CRL and CDP push location must be file system paths (UNC and\or NTFS). The script validates that push was successful by comparing the hash
 #                        values of the Master and CDP CRLs.
 #              Settings are configured within the crl_config.xml file.
-#              This script requires the Mono.Security.X509.X509Crl libraries version 2.10.9 (http://www.mono-project.com/Main_Page).
+#              This script requires the PSPKI powershell module (http://pspki.codeplex.com/).
 #              Load the PSCX powershell module for the get-hash commandlet (http://pscx.codeplex.com/). Make sure to follow the install instructions in the download's ReadMe.txt file.
 #              If ran within the task scheduler using the "Publish" method make sure the process runs as local administrator so it can read CertSvc service status
 #              and is given the right to "Logon as a batch job."
 #
 # For debug output type $debugpreference = "continue" at the powershell command prompt.
 #
+#
+# Date: 6/4/2016
+# Author: Stephen Hoekstra
+#
+# Modified script to take an XmlFile parameter and to push CRL to destination if missing.
+#
 
-param ($Action, $XmlFile = '.\crl_config.xml')
-
-if(!$Action -or (($Action -ne "publish") -and ($Action -ne "monitor")))
-{
-    write-host "Usage: ./crl_copy_v2.ps1 publish|monitor"
-    write-host ""
-    write-host "Example: to publish CRL to CDP locations specified in crl_config.xml"
-    write-host "./crl_copy_v2.ps1 publish"
-    write-host ""
-    write-host "Example: to compare the `"master`" CRL to published CRLs in the CDP locations specified in crl_config.xml"
-    write-host "./crl_copy_v2.ps1 monitor"
-    exit
-}
+param ($Action, $XmlFile = ' .\crl_config.xml')
 
 if(!(Test-Path $XmlFile))
 {
-    write-host "Cannot find $($XmlFile)!"
-    write-host "Please either run this script from the directory containing the crl_config.xml file, or use -XmlFile to specify the path to your config XML file."
-    break
+    Write-Host
+    Write-Host -Foreground Red "$($XmlFile) not found - exiting..."
+    Write-Host
+    Break
+}
+
+if(!$Action -or (($Action -ne "publish") -and ($Action -ne "monitor")))
+{
+    write-host "Usage: ./crl_copy_v3.ps1 publish|monitor"
+    write-host ""
+    write-host "Example: to publish CRL to CDP locations specified in crl_config.xml"
+    write-host "./crl_copy_v3.ps1 publish"
+    write-host ""
+    write-host "Example: to compare the `"master`" CRL to published CRLs in the CDP locations specified in crl_config.xml"
+    write-host "./crl_copy_v3.ps1 monitor"
+    exit
 }
 
 #
@@ -114,15 +121,18 @@ function results([string]$evt_string, [string]$evtlog_string, [int]$level, [stri
 #
 function retrieve([string]$name, [string]$method, [string]$path)
 {
+    $retrieved_crl = $null
     $debug_out = "Function: pulling CRL: " + $name + " Method: " + $method + " Path: " + $path
     write-debug $debug_out
 
     switch($method)
     {
-        "file" {
-            $retrieved_crl =[Mono.Security.X509.X509Crl]::CreateFromFile($path + $name)
+        "file"
+        {
+            $retrieved_crl = Get-CRL ($path + $name)
         }
-        "ldap" {
+        "ldap"
+        {
             $CRLNumber = 0
             $i = 0
             $found = [bool]$FALSE
@@ -148,50 +158,61 @@ function retrieve([string]$name, [string]$method, [string]$path)
                     if($ldapcrl.Properties.certificaterevocationlist)
                     {
                         [byte[]]$lcrl = $ldapcrl.Properties["certificaterevocationlist"][0]
-                        [Mono.Security.X509.X509Crl]$crl = $lcrl
-                        $CRLnumberTMP = [Mono.Security.ASN1Convert]::ToInt32($crl.Extensions["2.5.29.20"].ASN1[1].Value)
+                        $crl = Get-CRL $lcrl
+                        $CRLnumberTMP = $crl.GetCRLNumber()
                         if($CRLnumberTMP -ge $CRLNumber)
                         {
-                            $CRLNumber = $CRLnumberTMP
-                            $result_num = $i
-                            $found = [bool]$TRUE
-                        }
-                        $i++
+                        $CRLNumber = $CRLnumberTMP
+                        $result_num = $i
+                        $found = [bool]$TRUE
+                    }
+                    $i++
                     }
                 } #end foreach
             } # if results > 0
             else
             {
-                write-debug "No LDAP CRL found"
-            }
+            write-debug "No LDAP CRL found"
+        }
 
             if($found)
             {
-                [byte[]]$lcrl = $results[$result_num].Properties["certificaterevocationlist"][0]
-                $retrieved_crl = [Mono.Security.X509.X509Crl]$lcrl
-            }
+            [byte[]]$lcrl = $results[$result_num].Properties["certificaterevocationlist"][0]
+            $retrieved_crl = Get-CRL $lcrl
+        }
             else
             {
-                $retrieved_crl = $null
-            }
+            $retrieved_crl = $null
         }
-        "www" {
+        }
+        "www"
+        {
             $web_client = New-Object System.Net.WebClient
-            $retrieved_crl = [Mono.Security.X509.X509Crl]$web_client.DownloadData($path + $name)
+            $retrieved_crl = Get-CRL $web_client.DownloadData($path + $name)
         }
-        default {
+        default
+        {
             write-host "Unable to determine CRL pull method, must be `"www`", `"ldap`" or `"file`" "
             $evtlog_string = "Unable to determine CRL pull method, must be `"www`", `"ldap`" or `"file`" " + $newline
             $evt_string = $evt_string + "Unable to determine CRL pull method, must be `"www`", `"ldap`" or `"file`" " + $newline
         }
     }
-    $debug_out = "Pulled CRL CRLNumber: " + [Mono.Security.ASN1Convert]::ToInt32($retrieved_crl.Extensions["2.5.29.20"].ASN1[1].Value) + $newline
-    $debug_out = $debug_out + "Pulled CRL IssuerName: " + $retrieved_crl.IssuerName + $newline
-    $debug_out = $debug_out + "Pulled CRL ThisUpdate: " + $retrieved_crl.ThisUpdate.ToLocalTime() + $newline
-    $debug_out = $debug_out + "Pulled CRL NextUpdate: " + $retrieved_crl.NextUpdate.ToLocalTime() + $newline
-    $debug_out = $debug_out + "Pulled CRL NextCRLPublish: " + [Mono.Security.ASN1Convert]::ToDateTime($retrieved_crl.Extensions["1.3.6.1.4.1.311.21.4"].ASN1[1].Value).ToLocalTime() + $newline
-    write-debug $debug_out
-    return [Mono.Security.X509.X509Crl]$retrieved_crl
+    if($retrieved_crl)
+    {
+        $debug_out = "Pulled CRL CRLNumber: " + $retrieved_crl.GetCRLNumber() + $newline
+        $debug_out = $debug_out + "Pulled CRL IssuerName: " + $retrieved_crl.Issuer + $newline
+        $debug_out = $debug_out + "Pulled CRL ThisUpdate: " + $retrieved_crl.ThisUpdate.ToLocalTime() + $newline
+        $debug_out = $debug_out + "Pulled CRL NextUpdate: " + $retrieved_crl.NextUpdate.ToLocalTime() + $newline
+        $debug_out = $debug_out + "Pulled CRL NextCRLPublish: " + $retrieved_crl.GetNextPublish().ToLocalTime() + $newline
+        write-debug $debug_out
+        return $retrieved_crl
+    }
+    else
+    {
+        $debug_out = "ERROR: Could not fetch CRL " + $path + $name
+        write-debug $debug_out
+        return $null
+    }
 } # end of function retrieve
 
 #
@@ -227,11 +248,9 @@ $time = Get-Date
 $EventLevel = $EventInformation
 
 #
-# Add Mono .Net References
-# If running on an x64 system make sure the path is correct
+# Import the PSPKI module
 #
-Add-Type -Path "C:\Program Files (x86)\Mono\lib\mono\4.5\Mono.Security.dll"
-Import-Module -Name Pscx
+Import-Module -Name PSPKI
 
 #
 # Build the output string header
@@ -307,15 +326,15 @@ $evt_string = $evt_string + "</tr>" + $newline
 # Get the master CRL
 #
 write-debug "Pulling master CRL"
-[Mono.Security.X509.X509Crl]$master_crl = retrieve $master_name $master_retrieval $master_path
+$master_crl = retrieve $master_name $master_retrieval $master_path
 if($master_crl)
 {
     $evt_string = $evt_string + "<tr><td> Master </td>"
     $evt_string = $evt_string + "<td> " + $master_path + " </td>"
-    $evt_string = $evt_string + "<td> " + [Mono.Security.ASN1Convert]::ToInt32($master_crl.Extensions["2.5.29.20"].ASN1[1].Value) + " </td>"
+    $evt_string = $evt_string + "<td> " + $master_crl.GetCRLNumber() + " </td>"
     $evt_string = $evt_string + "<td> " + $master_crl.ThisUpdate.ToLocalTime() + " </td>"
     $evt_string = $evt_string + "<td> " + $master_crl.NextUpdate.ToLocalTime() + " </td>"
-    $evt_string = $evt_string + "<td> " + [Mono.Security.ASN1Convert]::ToDateTime($master_crl.Extensions["1.3.6.1.4.1.311.21.4"].ASN1[1].Value).ToLocalTime() + " </td>"
+    $evt_string = $evt_string + "<td> " + $master_crl.GetNextPublish().ToLocalTime() + " </td>"
 }
 else
 {
@@ -369,7 +388,7 @@ write-debug "Pulling CDP CRLs"
 foreach($cdp in $cdps)
 {
     $cdp_crl = $null
-    [Mono.Security.X509.X509Crl]$cdp_crl = retrieve $master_name $cdp.retrieval $cdp.retrieval_path
+    $cdp_crl = retrieve $master_name $cdp.retrieval $cdp.retrieval_path
     $evt_string = $evt_string + "<tr><td> " + $cdp.name + " </td>"
     # if CDP is http then make an HREF
     if($cdp.retrieval -eq "www")
@@ -391,10 +410,10 @@ foreach($cdp in $cdps)
 
     if($cdp_crl)
     {
-        $evt_string = $evt_string + "<td> " + [Mono.Security.ASN1Convert]::ToInt32($cdp_crl.Extensions["2.5.29.20"].ASN1[1].Value) + " </td>"
+        $evt_string = $evt_string + "<td> " + $cdp_crl.GetCRLNumber() + " </td>"
         $evt_string = $evt_string + "<td> " + $cdp_crl.ThisUpdate.ToLocalTime() + " </td>"
         $evt_string = $evt_string + "<td> " + $cdp_crl.NextUpdate.ToLocalTime() + " </td>"
-        $evt_string = $evt_string + "<td> " + [Mono.Security.ASN1Convert]::ToDateTime($cdp_crl.Extensions["1.3.6.1.4.1.311.21.4"].ASN1[1].Value).ToLocalTime() + " </td>"
+        $evt_string = $evt_string + "<td> " + $cdp_crl.GetNextPublish().ToLocalTime() + " </td>"
 
         if($cdp_crl.NextUpdate.ToLocalTime() -gt $time)
         {
@@ -404,7 +423,7 @@ foreach($cdp in $cdps)
             if($delta.$measure -gt $threshold)
             {
                 # if within threshold and the CRL numbers do not match set to orange
-                if([Mono.Security.ASN1Convert]::ToInt32($cdp_crl.Extensions["2.5.29.20"].ASN1[1].Value) -ne [Mono.Security.ASN1Convert]::ToInt32($master_crl.Extensions["2.5.29.20"].ASN1[1].Value))
+                if($cdp_crl.GetCRLNumber() -ne $master_crl.GetCRLNumber())
                 {
                     $evt_string = $evt_string + "<td bgcolor=`"orange`"> </td>"
                     $evtlog_string = $evtlog_string + $cdp.name + " CRL number does not match master CRL" + $newline
@@ -439,22 +458,58 @@ foreach($cdp in $cdps)
         $evtlog_string = $evtlog_string + "Unable to retrieve crl: " + $cdp.retrieval_path + $master_name + $newline
     }
 
-
     if($Action -eq "publish")
     {
         if($cdp.push)
         {
-            # push master CRL out to location if master CRL # > CDP CRL #
-            if([Mono.Security.ASN1Convert]::ToInt32($master_crl.Extensions["2.5.29.20"].ASN1[1].Value) -gt [Mono.Security.ASN1Convert]::ToInt32($cdp_crl.Extensions["2.5.29.20"].ASN1[1].Value))
+            if($cdp_crl -ne $null)
+            {
+                # push master CRL out to location if master CRL # > CDP CRL #
+                if($master_crl.GetCRLNumber() -gt $cdp_crl.GetCRLNumber())
+                {
+                    # only file copy at this time
+                    write-debug "Master CRL is newer, pushing out"
+                    $source_path = $master_path + $master_Name
+                    $source = Get-Item $source_path
+                    $dest_path = $cdp.push_path + $master_Name
+                    Copy-Item $source $dest_path
+
+                    # Compare the hash values of the master CRL to the copied CDP CRL
+                    # If they do not equal alert via SMTP set event level to high
+                    $master_hash = get-hash $source_path
+                    write-debug $master_hash.HashString
+                    $cdp_hash = get-hash $dest_path
+                    write-debug $cdp_hash.HashString
+                    if($master_hash.HashString -ne $cdp_hash.HashString)
+                    {
+                        $evt_string = $evt_string + "<td bgcolor=`"red`"> failed </td>"
+                        $evtlog_string = $evtlog_string + "CRL publish to " + $cdp.name + " failed" + $newline
+                        if($EventLevel -gt $EventHigh){$EventLevel = $EventHigh}
+                    }
+                    else
+                    {
+                        write-debug "Push succeeded"
+                        $evt_string = $evt_string + "<td bgcolor=`"green`"> " + $time + " </td>"
+                        $evtlog_string = $evtlog_string + "CRL publish to " + $cdp.name + " succeeded" + $newline
+                        # determine if we need to send an SMTP message
+                        if($published_notify)
+                        {
+                        $notify_of_publish = $published_notify
+                    }
+                    }
+                } #end if master crl # > cdp crl #
+                else
+                {
+                    $evt_string = $evt_string + "<td> </td>"
+                }
+            }
+            else
             {
                 # only file copy at this time
-                write-debug "Master CRL is newer, pushing out"
+                write-debug "CRL not found, pushing out"
                 $source_path = $master_path + $master_Name
                 $source = Get-Item $source_path
                 $dest_path = $cdp.push_path + $master_Name
-                write-host "source = $source"
-                write-host "dest_path = $dest_path"
-                write-debug "Running: Copy-Item $source $dest_path"
                 Copy-Item $source $dest_path
 
                 # Compare the hash values of the master CRL to the copied CDP CRL
@@ -480,17 +535,13 @@ foreach($cdp in $cdps)
                         $notify_of_publish = $published_notify
                     }
                 }
-            } #end if master crl # > cdp crl #
-            else
-            {
-                $evt_string = $evt_string + "<td> </td>"
             }
         } #end if $cdp.push = TRUE
         else
         {
             $evt_string = $evt_string + "<td> </td>"
         }
-    } #end of if arg1 = publish
+    } #end of if $Action = publish
 
     $evt_string = $evt_string + "</tr>" + $newline
     write-debug "----------------"
