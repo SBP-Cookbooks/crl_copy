@@ -17,6 +17,7 @@ default_action :create
 property :master_crl, kind_of: String, required: true, name_property: true
 property :cdps, kind_of: [Array, Hash], required: true, default: nil
 property :cluster_name, kind_of: String, required: false, default: nil
+property :has_delta_crl, kind_of: [TrueClass, FalseClass], required: true, default: false
 property :outfile, kind_of: [Array, String], required: false, default: nil
 
 property :eventvwr_event_high, kind_of: [Fixnum, String], required: false, default: lazy { node['crl_copy']['eventvwr']['event_high'] }
@@ -46,56 +47,60 @@ action :create do
   # Install and configure the CRL Copy script
   # https://gallery.technet.microsoft.com/scriptcenter/Powershell-CRL-Copy-v3-d8d5ff94
   #
-  crl_path = win_friendly_path(new_resource.master_crl)
-  crl_file = ::File.basename(crl_path.tr('\\', '/'))
-  crl_dir  = crl_path.gsub(crl_file, '')
-  script_dir = 'C:\CrlCopy\\' + ::File.basename(crl_file, ::File.extname(crl_file))
-
   directory 'C:\CrlCopy'
 
   cookbook_file 'C:\CrlCopy\CRL_Copy.ps1' do
     source 'CRL_Copy.ps1'
   end
 
-  outfile = new_resource.outfile
-  outfile = 'C:\CrlCopy' + "\\#{::File.basename(crl_file, ::File.extname(crl_file))}_CRL_Status.htm" if outfile.nil?
-  outfile = [outfile] unless outfile.is_a?(Array)
+  crl_paths = [win_friendly_path(new_resource.master_crl)]
+  crl_paths << win_friendly_path(new_resource.master_crl.split('.')[0] + '+.' + new_resource.master_crl.split('.')[1]) if new_resource.has_delta_crl
 
-  smtp_to = new_resource.smtp_to
-  smtp_to = [smtp_to] unless smtp_to.is_a?(Array)
+  crl_paths.each do |crl_path|
+    crl_file = ::File.basename(crl_path.tr('\\', '/'))
+    crl_dir  = crl_path.gsub(crl_file, '')
+    script_dir = 'C:\CrlCopy\\' + ::File.basename(crl_file, ::File.extname(crl_file))
 
-  template "C:\\CrlCopy\\#{::File.basename(crl_file, ::File.extname(crl_file))}_CRL_Config.xml" do
-    source 'CRL_Config.XML.erb'
-    variables(
-      cdps: new_resource.cdps,
-      cluster_name: new_resource.cluster_name,
-      crl_file: crl_file,
-      crl_dir: crl_dir,
-      eventvwr_event_high: eventvwr_event_high,
-      eventvwr_event_id: new_resource.eventvwr_event_id,
-      eventvwr_event_information: new_resource.eventvwr_event_information,
-      eventvwr_event_source: new_resource.eventvwr_event_source,
-      eventvwr_event_warning: new_resource.eventvwr_event_warning,
-      outfile: outfile,
-      smtp_from: new_resource.smtp_from,
-      smtp_published_notify: new_resource.smtp_published_notify,
-      smtp_send_mail: new_resource.smtp_send_mail,
-      smtp_server: new_resource.smtp_server,
-      smtp_threshold: new_resource.smtp_threshold,
-      smtp_title: new_resource.smtp_title,
-      smtp_to: smtp_to,
-      warnings_threshold: new_resource.warnings_threshold,
-      warnings_threshold_unit: new_resource.warnings_threshold_unit.downcase.capitalize
-    )
-  end
+    outfile = new_resource.outfile
+    outfile = 'C:\CrlCopy' + "\\#{::File.basename(crl_file, ::File.extname(crl_file))}_CRL_Status.htm" if outfile.nil?
+    outfile = [outfile] unless outfile.is_a?(Array)
 
-  windows_task "CRLCopy #{crl_file}" do
-    user new_resource.windows_task_user
-    password new_resource.windows_task_password if new_resource.windows_task_password
-    command "%SystemRoot%\\system32\\WindowsPowerShell\\v1.0\\powershell.exe C:\\CrlCopy\\CRL_Copy.ps1 -Action Publish -XmlFile C:\\CrlCopy\\#{::File.basename(crl_file, ::File.extname(crl_file))}_CRL_Config.xml"
-    run_level :highest
-    frequency new_resource.windows_task_frequency.downcase.to_sym
-    frequency_modifier new_resource.windows_task_frequency_modifier.to_i
+    smtp_to = new_resource.smtp_to
+    smtp_to = [smtp_to] unless smtp_to.is_a?(Array)
+
+    template "C:\\CrlCopy\\#{::File.basename(crl_file, ::File.extname(crl_file))}_CRL_Config.xml" do
+      source 'CRL_Config.XML.erb'
+      variables(
+        cdps: new_resource.cdps,
+        cluster_name: new_resource.cluster_name,
+        crl_file: crl_file,
+        crl_dir: crl_dir,
+        eventvwr_event_high: eventvwr_event_high,
+        eventvwr_event_id: new_resource.eventvwr_event_id,
+        eventvwr_event_information: new_resource.eventvwr_event_information,
+        eventvwr_event_source: new_resource.eventvwr_event_source,
+        eventvwr_event_warning: new_resource.eventvwr_event_warning,
+        outfile: outfile,
+        smtp_from: new_resource.smtp_from,
+        smtp_published_notify: new_resource.smtp_published_notify,
+        smtp_send_mail: new_resource.smtp_send_mail,
+        smtp_server: new_resource.smtp_server,
+        smtp_threshold: new_resource.smtp_threshold,
+        smtp_title: new_resource.smtp_title,
+        smtp_to: smtp_to,
+        warnings_threshold: new_resource.warnings_threshold,
+        warnings_threshold_unit: new_resource.warnings_threshold_unit.downcase.capitalize
+      )
+    end
+
+    windows_task "CRLCopy #{crl_file}" do
+      user new_resource.windows_task_user
+      password new_resource.windows_task_password if new_resource.windows_task_password
+      command "%SystemRoot%\\system32\\WindowsPowerShell\\v1.0\\powershell.exe C:\\CrlCopy\\CRL_Copy.ps1 -Action Publish -XmlFile C:\\CrlCopy\\#{::File.basename(crl_file, ::File.extname(crl_file))}_CRL_Config.xml"
+      run_level :highest
+      frequency new_resource.windows_task_frequency.downcase.to_sym
+      frequency_modifier new_resource.windows_task_frequency_modifier.to_i
+    end
   end
 end
 
