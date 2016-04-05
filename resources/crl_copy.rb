@@ -59,7 +59,6 @@ action :create do
   crl_paths.each do |crl_path|
     crl_file = ::File.basename(crl_path.tr('\\', '/'))
     crl_dir  = crl_path.gsub(crl_file, '')
-    script_dir = 'C:\CrlCopy\\' + ::File.basename(crl_file, ::File.extname(crl_file))
 
     outfile = new_resource.outfile
     outfile = 'C:\CrlCopy' + "\\#{::File.basename(crl_file, ::File.extname(crl_file))}_CRL_Status.htm" if outfile.nil?
