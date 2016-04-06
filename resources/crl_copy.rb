@@ -21,7 +21,7 @@ property :has_delta_crl, kind_of: [TrueClass, FalseClass], required: true, defau
 property :outfile, kind_of: [Array, String], required: false, default: nil
 
 property :eventvwr_event_high, kind_of: [Fixnum, String], required: false, default: lazy { node['crl_copy']['eventvwr']['event_high'] }
-property :eventvwr_event_id, kind_of: [Fixnum, String], required: false, default: lazy { node['crl_copy']['eventvwr']['event_id']  }
+property :eventvwr_event_id, kind_of: [Fixnum, String], required: false, default: lazy { node['crl_copy']['eventvwr']['event_id'] }
 property :eventvwr_event_information, kind_of: [Fixnum, String], required: false, default: lazy { node['crl_copy']['eventvwr']['event_information'] }
 property :eventvwr_event_source, kind_of: String, required: false, default: lazy { node['crl_copy']['eventvwr']['event_source'] }
 property :eventvwr_event_warning, kind_of: [Fixnum, String], required: false, default: lazy { node['crl_copy']['eventvwr']['event_warning'] }

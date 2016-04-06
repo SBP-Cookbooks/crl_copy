@@ -34,7 +34,7 @@ shared_examples_for 'installs CRL Copy and config xml' do
     it "should render template C:\\CrlCopy\\#{@crl_name}_CRL_Config.xml" do
       expect(chef_run).to create_template("C:\\CrlCopy\\#{crl_name}_CRL_Config.xml").with_variables(template_variables)
 
-        template_content = <<-EOF.gsub(/^ {10}/, '')
+      template_content = <<-EOF.gsub(/^ {10}/, '')
           <?xml version="1.0" encoding="US-ASCII"?>
           <configuration>
           #{content_master_crl.chomp}
@@ -67,72 +67,79 @@ describe 'crl_copy::default' do
     'issuingca1'
   end
 
-  let(:content_adcs) do <<-EOF
-    <ADCS>
-        <cluster></cluster> <!-- no value for FALSE -->
-    </ADCS>
+  let(:content_adcs) do
+    <<-EOF.gsub(/^ {2}/, '')
+      <ADCS>
+          <cluster></cluster> <!-- no value for FALSE -->
+      </ADCS>
     EOF
   end
 
-  let(:content_cdps) do <<-EOF
-    <cdps>
-        <cdp>
-                      <name>internal cdp1</name>
-                      <retrieval>www</retrieval>
-                      <retrieval_path>http://www.f.internal/pki/</retrieval_path>
-                      <push>true</push>  <!-- no value for FALSE -->
-                      <push_method>file</push_method>
-                      <push_path>\\\\www.f.internal\\pki\\</push_path>
-        </cdp>
-    </cdps>
+  let(:content_cdps) do
+    <<-EOF.gsub(/^ {2}/, '')
+      <cdps>
+          <cdp>
+                        <name>internal cdp1</name>
+                        <retrieval>www</retrieval>
+                        <retrieval_path>http://www.f.internal/pki/</retrieval_path>
+                        <push>true</push>  <!-- no value for FALSE -->
+                        <push_method>file</push_method>
+                        <push_path>\\\\www.f.internal\\pki\\</push_path>
+          </cdp>
+      </cdps>
     EOF
   end
 
-  let(:content_eventvwr) do <<-EOF
-    <eventvwr>
-        <EventSource>CRL Copy Process</EventSource>
-        <EventID>5000</EventID>
-        <EventHigh>1</EventHigh>
-        <EventWarning>2</EventWarning>
-        <EventInformation>4</EventInformation>
-    </eventvwr>
+  let(:content_eventvwr) do
+    <<-EOF.gsub(/^ {2}/, '')
+      <eventvwr>
+          <EventSource>CRL Copy Process</EventSource>
+          <EventID>5000</EventID>
+          <EventHigh>1</EventHigh>
+          <EventWarning>2</EventWarning>
+          <EventInformation>4</EventInformation>
+      </eventvwr>
     EOF
   end
 
-  let(:content_master_crl) do <<-EOF
-    <master_crl>
-        <name>#{crl_name}.crl</name>
-        <retrieval>file</retrieval>
-        <path>C:\\Windows\\System32\\certsrv\\CertEnroll\\</path>
-    </master_crl>
+  let(:content_master_crl) do
+    <<-EOF.gsub(/^ {2}/, '')
+      <master_crl>
+          <name>#{crl_name}.crl</name>
+          <retrieval>file</retrieval>
+          <path>C:\\Windows\\System32\\certsrv\\CertEnroll\\</path>
+      </master_crl>
     EOF
   end
 
-  let(:content_output) do <<-EOF
-    <output>
-        <outfile>C:\\CrlCopy\\#{crl_name}_CRL_Status.htm</outfile>
-    </output>
+  let(:content_output) do
+    <<-EOF.gsub(/^ {2}/, '')
+      <output>
+          <outfile>C:\\CrlCopy\\#{crl_name}_CRL_Status.htm</outfile>
+      </output>
     EOF
   end
 
-  let(:content_smtp) do <<-EOF
-    <SMTP>
-        <send_SMTP></send_SMTP> <!-- no value for FALSE -->
-        <SmtpServer></SmtpServer>
-        <from></from>
-        <to></to>
-        <published_notify></published_notify> <!-- no value for FALSE -->
-        <title>CRL Copy Process Results</title>
-        <SMTPThreshold>2</SMTPThreshold> <!-- event level when an SMTP message is sent -->
-    </SMTP>
+  let(:content_smtp) do
+    <<-EOF.gsub(/^ {2}/, '')
+      <SMTP>
+          <send_SMTP></send_SMTP> <!-- no value for FALSE -->
+          <SmtpServer></SmtpServer>
+          <from></from>
+          <to></to>
+          <published_notify></published_notify> <!-- no value for FALSE -->
+          <title>CRL Copy Process Results</title>
+          <SMTPThreshold>2</SMTPThreshold> <!-- event level when an SMTP message is sent -->
+      </SMTP>
     EOF
   end
 
-  let(:content_warnings) do <<-EOF
-    <warnings>
-        <threshold>5</threshold>
-        <threshold_unit>Hours</threshold_unit> <!-- days, hours, minutes or seconds -->
-    </warnings>
+  let(:content_warnings) do
+    <<-EOF.gsub(/^ {2}/, '')
+      <warnings>
+          <threshold>5</threshold>
+          <threshold_unit>Hours</threshold_unit> <!-- days, hours, minutes or seconds -->
+      </warnings>
     EOF
   end
 
@@ -273,7 +280,7 @@ describe 'crl_copy::default' do
           master_crl['cdps']['internal cdp1']['push_method']    = 'file'
           master_crl['cdps']['internal cdp1']['push_path']      = '\\\\www.f.internal\pki\\'
         end
-        node.set['crl_copy']['master_crls']["C:\\Windows\\System32\\certsrv\\CertEnroll\\issuingca2.crl"].tap do |master_crl|
+        node.set['crl_copy']['master_crls']['C:\\Windows\\System32\\certsrv\\CertEnroll\\issuingca2.crl'].tap do |master_crl|
           master_crl['cdps']['internal cdp1']['retrieval']      = 'www'
           master_crl['cdps']['internal cdp1']['retrieval_path'] = 'http://www.f.internal/pki/'
           master_crl['cdps']['internal cdp1']['push']           = 'true'
@@ -325,35 +332,36 @@ describe 'crl_copy::default' do
       end.converge(described_recipe)
     end
 
-    let(:content_cdps) do <<-EOF.gsub(/^ {2}/, '')
-      <cdps>
-          <cdp>
-                        <name>internal cdp1</name>
-                        <retrieval>www</retrieval>
-                        <retrieval_path>http://www.f.internal/pki/</retrieval_path>
-                        <push>true</push>  <!-- no value for FALSE -->
-                        <push_method>file</push_method>
-                        <push_path>\\\\www.f.internal\\pki\\</push_path>
-                    </cdp>
+    let(:content_cdps) do
+      <<-EOF.gsub(/^ {4}/, '')
+        <cdps>
+            <cdp>
+                          <name>internal cdp1</name>
+                          <retrieval>www</retrieval>
+                          <retrieval_path>http://www.f.internal/pki/</retrieval_path>
+                          <push>true</push>  <!-- no value for FALSE -->
+                          <push_method>file</push_method>
+                          <push_path>\\\\www.f.internal\\pki\\</push_path>
+                      </cdp>
 
-                    <cdp>
-                        <name>internal ldap</name>
-                        <retrieval>ldap</retrieval>
-                        <retrieval_path>dc=f,dc=internal</retrieval_path>
-                        <push></push>  <!-- no value for FALSE -->
-                        <push_method></push_method>
-                        <push_path></push_path>
-                    </cdp>
+                      <cdp>
+                          <name>internal ldap</name>
+                          <retrieval>ldap</retrieval>
+                          <retrieval_path>dc=f,dc=internal</retrieval_path>
+                          <push></push>  <!-- no value for FALSE -->
+                          <push_method></push_method>
+                          <push_path></push_path>
+                      </cdp>
 
-                    <cdp>
-                        <name>external cdp</name>
-                        <retrieval>www</retrieval>
-                        <retrieval_path>http://pki.g.internal/pki/</retrieval_path>
-                        <push></push>  <!-- no value for FALSE -->
-                        <push_method></push_method>
-                        <push_path></push_path>
-          </cdp>
-      </cdps>
+                      <cdp>
+                          <name>external cdp</name>
+                          <retrieval>www</retrieval>
+                          <retrieval_path>http://pki.g.internal/pki/</retrieval_path>
+                          <push></push>  <!-- no value for FALSE -->
+                          <push_method></push_method>
+                          <push_path></push_path>
+            </cdp>
+        </cdps>
       EOF
     end
 
@@ -381,35 +389,35 @@ describe 'crl_copy::default' do
             'push_method'    => '',
             'push_path'      => ''
           }
-        },
+        }
       )
     end
 
     let(:template_variables) do
       template_variables_default.merge(
-            cdps: {
-              'internal cdp1' => {
-                'retrieval'      => 'www',
-                'retrieval_path' => 'http://www.f.internal/pki/',
-                'push'           => 'true',
-                'push_method'    => 'file',
-                'push_path'      => '\\\\www.f.internal\pki\\'
-              },
-              'internal ldap' => {
-                'retrieval'      => 'ldap',
-                'retrieval_path' => 'dc=f,dc=internal',
-                'push'           => '',
-                'push_method'    => '',
-                'push_path'      => ''
-              },
-              'external cdp' => {
-                'retrieval'      => 'www',
-                'retrieval_path' => 'http://pki.g.internal/pki/',
-                'push'           => '',
-                'push_method'    => '',
-                'push_path'      => ''
-              }
-            },
+        cdps: {
+          'internal cdp1' => {
+            'retrieval'      => 'www',
+            'retrieval_path' => 'http://www.f.internal/pki/',
+            'push'           => 'true',
+            'push_method'    => 'file',
+            'push_path'      => '\\\\www.f.internal\pki\\'
+          },
+          'internal ldap' => {
+            'retrieval'      => 'ldap',
+            'retrieval_path' => 'dc=f,dc=internal',
+            'push'           => '',
+            'push_method'    => '',
+            'push_path'      => ''
+          },
+          'external cdp' => {
+            'retrieval'      => 'www',
+            'retrieval_path' => 'http://pki.g.internal/pki/',
+            'push'           => '',
+            'push_method'    => '',
+            'push_path'      => ''
+          }
+        }
       )
     end
 
@@ -432,22 +440,23 @@ describe 'crl_copy::default' do
       end.converge(described_recipe)
     end
 
-    let(:content_adcs) do <<-EOF.gsub(/^ {2}/, '')
-      <ADCS>
-                    <cluster>cluster</cluster> <!-- no value for FALSE -->
-                </ADCS>
+    let(:content_adcs) do
+      <<-EOF.gsub(/^ {4}/, '')
+        <ADCS>
+                      <cluster>cluster</cluster> <!-- no value for FALSE -->
+                  </ADCS>
       EOF
     end
 
     let(:crl_copy_attributes) do
       crl_copy_attributes_default.merge(
-        'cluster_name' => 'cluster',
+        'cluster_name' => 'cluster'
       )
     end
 
     let(:template_variables) do
       template_variables_default.merge(
-        cluster_name: 'cluster',
+        cluster_name: 'cluster'
       )
     end
 
@@ -474,14 +483,15 @@ describe 'crl_copy::default' do
       end.converge(described_recipe)
     end
 
-    let(:content_eventvwr) do <<-EOF.gsub(/^ {2}/, '')
-      <eventvwr>
-          <EventSource>CRL Copy Event</EventSource>
-          <EventID>6000</EventID>
-          <EventHigh>2</EventHigh>
-          <EventWarning>4</EventWarning>
-          <EventInformation>8</EventInformation>
-      </eventvwr>
+    let(:content_eventvwr) do
+      <<-EOF.gsub(/^ {4}/, '')
+        <eventvwr>
+            <EventSource>CRL Copy Event</EventSource>
+            <EventID>6000</EventID>
+            <EventHigh>2</EventHigh>
+            <EventWarning>4</EventWarning>
+            <EventInformation>8</EventInformation>
+        </eventvwr>
       EOF
     end
 
@@ -491,7 +501,7 @@ describe 'crl_copy::default' do
         'eventvwr_event_id'          => 6000,
         'eventvwr_event_high'        => 2,
         'eventvwr_event_warning'     => 4,
-        'eventvwr_event_information' => 8,
+        'eventvwr_event_information' => 8
       )
     end
 
@@ -501,7 +511,7 @@ describe 'crl_copy::default' do
         eventvwr_event_id: 6000,
         eventvwr_event_information: 8,
         eventvwr_event_source: 'CRL Copy Event',
-        eventvwr_event_warning: 4,
+        eventvwr_event_warning: 4
       )
     end
 
@@ -550,10 +560,12 @@ describe 'crl_copy::default' do
       end
 
       it "should render template C:\\CrlCopy\\#{@crl_name}+_CRL_Config.xml" do
-        expect(chef_run).to create_template("C:\\CrlCopy\\#{crl_name}+_CRL_Config.xml").with_variables(template_variables_default.merge(
-          crl_file: "#{crl_name}+.crl",
-          outfile: ["C:\\CrlCopy\\#{crl_name}+_CRL_Status.htm"]
-        ))
+        expect(chef_run).to create_template("C:\\CrlCopy\\#{crl_name}+_CRL_Config.xml").with_variables(
+          template_variables_default.merge(
+            crl_file: "#{crl_name}+.crl",
+            outfile: ["C:\\CrlCopy\\#{crl_name}+_CRL_Status.htm"]
+          )
+        )
 
         template_content = <<-EOF.gsub(/^ {10}/, '')
           <?xml version="1.0" encoding="US-ASCII"?>
@@ -584,9 +596,11 @@ describe 'crl_copy::default' do
       end
 
       it "should create a windows_task[CRLCopy #{@crl_name}+.crl] resource" do
-        expect(chef_run).to create_windows_task("CRLCopy #{crl_name}+.crl").with(windows_task_attributes_default.merge(
-          command: '%SystemRoot%\system32\WindowsPowerShell\v1.0\powershell.exe C:\CrlCopy\crl_copy_v3.ps1 -Action Publish -XmlFile C:\CrlCopy\issuingca1+_CRL_Config.xml',
-        ))
+        expect(chef_run).to create_windows_task("CRLCopy #{crl_name}+.crl").with(
+          windows_task_attributes_default.merge(
+            command: '%SystemRoot%\system32\WindowsPowerShell\v1.0\powershell.exe C:\CrlCopy\crl_copy_v3.ps1 -Action Publish -XmlFile C:\CrlCopy\issuingca1+_CRL_Config.xml'
+          )
+        )
       end
     end
   end
@@ -605,22 +619,23 @@ describe 'crl_copy::default' do
       end.converge(described_recipe)
     end
 
-    let(:content_output) do <<-EOF.gsub(/^ {2}/, '')
-      <output>
-                    <outfile>C:\\Windows\\System32\\certsrv\\CertEnroll\\CRLCopy.htm</outfile>
-                </output>
+    let(:content_output) do
+      <<-EOF.gsub(/^ {4}/, '')
+        <output>
+                      <outfile>C:\\Windows\\System32\\certsrv\\CertEnroll\\CRLCopy.htm</outfile>
+                  </output>
       EOF
     end
 
     let(:crl_copy_attributes) do
       crl_copy_attributes_default.merge(
-        'outfile' => 'C:\Windows\System32\certsrv\CertEnroll\CRLCopy.htm',
+        'outfile' => 'C:\Windows\System32\certsrv\CertEnroll\CRLCopy.htm'
       )
     end
 
     let(:template_variables) do
       template_variables_default.merge(
-        outfile: ['C:\Windows\System32\certsrv\CertEnroll\CRLCopy.htm'],
+        outfile: ['C:\Windows\System32\certsrv\CertEnroll\CRLCopy.htm']
       )
     end
 
@@ -649,16 +664,17 @@ describe 'crl_copy::default' do
       end.converge(described_recipe)
     end
 
-    let(:content_smtp) do <<-EOF.gsub(/^ {2}/, '')
-      <SMTP>
-          <send_SMTP>true</send_SMTP> <!-- no value for FALSE -->
-          <SmtpServer>exchange.f.internal</SmtpServer>
-          <from>crlcopy@f.internal</from>
-          <to>pfox@f.internal,pierref@f.internal</to>
-          <published_notify>true</published_notify> <!-- no value for FALSE -->
-          <title>CRL Copy Process Results</title>
-          <SMTPThreshold>2</SMTPThreshold> <!-- event level when an SMTP message is sent -->
-      </SMTP>
+    let(:content_smtp) do
+      <<-EOF.gsub(/^ {4}/, '')
+        <SMTP>
+            <send_SMTP>true</send_SMTP> <!-- no value for FALSE -->
+            <SmtpServer>exchange.f.internal</SmtpServer>
+            <from>crlcopy@f.internal</from>
+            <to>pfox@f.internal,pierref@f.internal</to>
+            <published_notify>true</published_notify> <!-- no value for FALSE -->
+            <title>CRL Copy Process Results</title>
+            <SMTPThreshold>2</SMTPThreshold> <!-- event level when an SMTP message is sent -->
+        </SMTP>
       EOF
     end
 
@@ -670,7 +686,7 @@ describe 'crl_copy::default' do
         'smtp_to'               => ['pfox@f.internal', 'pierref@f.internal'],
         'smtp_published_notify' => true,
         'smtp_title'            => 'CRL Copy Process Results',
-        'smtp_threshold'        => 2,
+        'smtp_threshold'        => 2
       )
     end
 
@@ -682,7 +698,7 @@ describe 'crl_copy::default' do
         smtp_server: 'exchange.f.internal',
         smtp_threshold: 2,
         smtp_title: 'CRL Copy Process Results',
-        smtp_to: ['pfox@f.internal', 'pierref@f.internal'],
+        smtp_to: ['pfox@f.internal', 'pierref@f.internal']
       )
     end
 
@@ -706,12 +722,13 @@ describe 'crl_copy::default' do
       end.converge(described_recipe)
     end
 
-    let(:content_warnings) do <<-EOF.gsub(/^ {2}/, '')
-      <warnings>
-                    <threshold>60</threshold>
-                    <threshold_unit>Minutes</threshold_unit> <!-- days, hours, minutes or seconds -->
-                </warnings>
-      EOF
+    let(:content_warnings) do
+      <<-EOF.gsub(/^ {4}/, '')
+        <warnings>
+                      <threshold>60</threshold>
+                      <threshold_unit>Minutes</threshold_unit> <!-- days, hours, minutes or seconds -->
+                  </warnings>
+        EOF
     end
 
     let(:crl_copy_attributes) do
@@ -765,12 +782,12 @@ describe 'crl_copy::default' do
 
     let(:windows_task_attributes) do
       windows_task_attributes_default.merge(
-          user: 'Username',
-          password: 'Password',
-          command: '%SystemRoot%\system32\WindowsPowerShell\v1.0\powershell.exe C:\CrlCopy\crl_copy_v3.ps1 -Action Publish -XmlFile C:\CrlCopy\issuingca1_CRL_Config.xml',
-          run_level: :highest,
-          frequency: :daily,
-          frequency_modifier: 1
+        user: 'Username',
+        password: 'Password',
+        command: '%SystemRoot%\system32\WindowsPowerShell\v1.0\powershell.exe C:\CrlCopy\crl_copy_v3.ps1 -Action Publish -XmlFile C:\CrlCopy\issuingca1_CRL_Config.xml',
+        run_level: :highest,
+        frequency: :daily,
+        frequency_modifier: 1
       )
     end
 

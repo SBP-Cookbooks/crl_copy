@@ -34,7 +34,7 @@ end
 if node['crl_copy']['master_crls']
   node['crl_copy']['master_crls'].each do |master_crl, props|
     crl_copy master_crl do
-      props.each {|key, value| send(key, value) unless value.nil? }
+      props.each { |key, value| send(key, value) unless value.nil? }
     end
   end
 end
