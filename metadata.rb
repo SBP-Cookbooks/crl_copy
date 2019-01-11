@@ -1,7 +1,7 @@
 name             'crl_copy'
 maintainer       'Stephen Hoekstra'
 maintainer_email 'shoekstra@schubergphilis.com'
-license          'All rights reserved'
+license          'Apache-2.0'
 description      'Chef cookbook to installand configure the CRL Copy PS script from Script Center'
 version          '0.1.0'
 source_url       'https://github.com/shoekstra/chef-crl_copy' if respond_to?(:source_url)
