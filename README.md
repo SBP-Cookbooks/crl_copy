@@ -10,11 +10,9 @@ Chef cookbook to install and configure the [CRL Copy PS script from Script Cente
 2. [Usage](#usage)
 3. [Attributes](#attributes)
 4. [Recipes](#recipes)
-    * [Public Recipes](#public-recipes)
 5. [Versioning](#versioning)
-6. [Testing](#testing)
-7. [License and Author](#license-and-author)
-8. [Contributing](#contributing)
+6. [License and Author](#license-and-author)
+7. [Contributing](#contributing)
 
 ## Requirements
 
@@ -26,7 +24,9 @@ This cookbook supports:
 
 ### Cookbooks
 
-This cookbook does not depend on any other cookbooks.
+This cookbook depends on the following cookbooks:
+
+* pspki
 
 ## Usage
 
@@ -36,100 +36,63 @@ TODO: *Explain how to use the cookbook*
 
 Attributes in this cookbook:
 
-<table>
-  <tr>
-    <th>Key</th>
-    <th>Type</th>
-    <th>Description</th>
-    <th>Default</th>
-  </tr>
-  <tr>
-    <td><tt>['crl_copy']['eventvwr']['event_high']</tt></td>
-    <td>Int</td>
-    <td>Some info about the attribute</td>
-    <td><tt>1</tt></td>
-  </tr>
-  <tr>
-    <td><tt>['crl_copy']['eventvwr']['event_id']</tt></td>
-    <td>Int</td>
-    <td>Some info about the attribute</td>
-    <td><tt>5000</tt></td>
-  </tr>
-  <tr>
-    <td><tt>['crl_copy']['eventvwr']['event_information']</tt></td>
-    <td>Int</td>
-    <td>Some info about the attribute</td>
-    <td><tt>4</tt></td>
-  </tr>
-  <tr>
-    <td><tt>['crl_copy']['eventvwr']['event_source']</tt></td>
-    <td>String</td>
-    <td>Some info about the attribute</td>
-    <td><tt>CRL Copy Process</tt></td>
-  </tr>
-  <tr>
-    <td><tt>['crl_copy']['eventvwr']['event_warning']</tt></td>
-    <td>Int</td>
-    <td>Some info about the attribute</td>
-    <td><tt>2</tt></td>
-  </tr>
-  <tr>
-    <td><tt>['crl_copy']['smtp']['from']</tt></td>
-    <td>String</td>
-    <td>Some info about the attribute</td>
-    <td><tt>nil</tt></td>
-  </tr>
-  <tr>
-    <td><tt>['crl_copy']['smtp']['published_notify']</tt></td>
-    <td>String</td>
-    <td>Some info about the attribute</td>
-    <td><tt>false</tt></td>
-  </tr>
-  <tr>
-    <td><tt>['crl_copy']['smtp']['send_mail']</tt></td>
-    <td>String</td>
-    <td>Some info about the attribute</td>
-    <td><tt>false</tt></td>
-  </tr>
-  <tr>
-    <td><tt>['crl_copy']['smtp']['server']</tt></td>
-    <td>String</td>
-    <td>Some info about the attribute</td>
-    <td><tt>nil</tt></td>
-  </tr>
-  <tr>
-    <td><tt>['crl_copy']['smtp']['threshold']</tt></td>
-    <td>Int</td>
-    <td>Some info about the attribute</td>
-    <td><tt>2</tt></td>
-  </tr>
-  <tr>
-    <td><tt>['crl_copy']['smtp']['title']</tt></td>
-    <td>String</td>
-    <td>Some info about the attribute</td>
-    <td><tt>CRL Copy Process Results</tt></td>
-  </tr>
-  <tr>
-    <td><tt>['crl_copy']['smtp']['to']</tt></td>
-    <td>String</td>
-    <td>Some info about the attribute</td>
-    <td><tt>nil</tt></td>
-  </tr>
-  <tr>
-    <td><tt>['crl_copy']['warnings']['threshold']</tt></td>
-    <td>Int</td>
-    <td>Some info about the attribute</td>
-    <td><tt>5</tt></td>
-  </tr>
-</table>
+| Key                                                  | Type   | Description                                                                                          | Default                    |
+| ---------------------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------- | -------------------------- |
+| `['crl_copy']['eventvwr']['event_id']`               | Int    | Configures the event ID                                                                              | `5000`                     |
+| `['crl_copy']['eventvwr']['event_source']`           | String | Configures the event source                                                                          | `CRL Copy Process`         |
+| `['crl_copy']['smtp']['from']`                       | String | Configures mail notification sender address                                                          | `nil`                      |
+| `['crl_copy']['smtp']['published_notify']`           | String | Configures whether to send published notification                                                    | `false`                    |
+| `['crl_copy']['smtp']['send_mail']`                  | String | Configures whether to send mail notifications                                                        | `false`                    |
+| `['crl_copy']['smtp']['server']`                     | String | Configures mail server to use                                                                        | `nil`                      |
+| `['crl_copy']['smtp']['threshold']`                  | Int    | Configures threshold for mail notifications                                                          | `2`                        |
+| `['crl_copy']['smtp']['title']`                      | String | Configures mail notification subject                                                                 | `CRL Copy Process Results` |
+| `['crl_copy']['smtp']['to']`                         | String | Configures mail notification recipient addresses                                                     | `nil`                      |
+| `['crl_copy']['warnings']['threshold']`              | Int    | Configures threshold value                                                                           | `5`                        |
+| `['crl_copy']['warnings']['threshold_unit']`         | String | Configures unit for threshold (one of "Days", "Hours", "Minutes" or "Seconds")                       | `Hours`                    |
+| `['crl_copy']['windows_task']['frequency']`          | String | Configures scheduled task frequency unit (one of "Monthly", "Weekly", "Daily", "Hourly" or "Minute") | `Minute`                   |
+| `['crl_copy']['windows_task']['frequency_modifier']` | Int    | Configures scheduled task frequency modifier                                                         | `30`                       |
+| `['crl_copy']['windows_task']['password']`           | String | Configures a password for the scheduled task user                                                    | `nil`                      |
+| `['crl_copy']['windows_task']['user']`               | String | Configures the user to run the task as                                                               | `SYSTEM`                   |
 
 ## Recipes
 
-### Public Recipes
+### `crl_copy::default`
 
-#### `crl_copy::default`
+Simple recipe that creates `crl_copy` resources by iterating over the `node['crl_copy']['master_crls']` attribute.
 
-Installs and configures script and scheduled task to manage CRL distribution.
+## Resources
+
+### `crl_copy`
+
+#### Actions
+
+- `:create` - Creates a scheduled task that runs the CRL Copy script to copy a CRL to a CDP
+
+#### Properties
+
+`master_crl`: String, required: true, name_property: true
+`cdps`: [Array, Hash], required: true, default: `nil`
+`cluster_name`: String, required: false, default: `nil`
+`outfile`: [Array, String], required: false, default: `nil`
+
+`eventvwr_event_id`: [Integer, String], required: false, default: `lazy { node['crl_copy']['eventvwr']['event_id'] }`
+`eventvwr_event_source`: String, required: false, default: `lazy { node['crl_copy']['eventvwr']['event_source'] }`
+
+`smtp_from`: String, required: false, default: `lazy { node['crl_copy']['smtp']['from'] }`
+`smtp_published_notify`: [TrueClass, FalseClass], required: false, default: `lazy { node['crl_copy']['smtp']['published_notify'] }`
+`smtp_send_mail`: [TrueClass, FalseClass], required: false, default: `lazy { node['crl_copy']['smtp']['send_mail'] }`
+`smtp_server`: String, required: false, default: `lazy { node['crl_copy']['smtp']['server'] }`
+`smtp_threshold`: [Integer, String], required: false, default: `lazy { node['crl_copy']['smtp']['threshold'] }`
+`smtp_title`: String, required: false, default: `lazy { node['crl_copy']['smtp']['title'] }`
+`smtp_to`: [Array, String], required: false, default: `lazy { node['crl_copy']['smtp']['to'] }`
+
+`warnings_threshold`: [Integer, String], required: false, default: `lazy { node['crl_copy']['warnings']['threshold'] }`
+`warnings_threshold_unit`: String, required: false, default: `lazy { node['crl_copy']['warnings']['threshold_unit'] }, `regex:` /^(Days|Hours|Minutes|Seconds)$/i`
+
+`windows_task_frequency`: String, required: false, default: `lazy { node['crl_copy']['windows_task']['frequency'] }, `regex:` /^(Monthly|Weekly|Daily|Hourly|Minute)$/i`
+`windows_task_frequency_modifier`: [Integer, String], required: false, default: `lazy { node['crl_copy']['windows_task']['frequency_modifier'] }`
+`windows_task_password`: String, required: false, default: `lazy { node['crl_copy']['windows_task']['password'] }`
+`windows_task_user`: String, required: false, default: `lazy { node['crl_copy']['windows_task']['user'] }`
 
 ## Versioning
 
@@ -140,17 +103,6 @@ Given a version number MAJOR.MINOR.PATCH, increment the:
 * MAJOR version when you make functional cookbook changes,
 * MINOR version when you add functionality in a backwards-compatible manner,
 * PATCH version when you make backwards-compatible bug fixes.
-
-## Testing
-
-    rake integration:cloud        # Run Test Kitchen with cloud plugins
-    rake integration:vagrant      # Run Test Kitchen with Vagrant
-    rake spec                     # Run ChefSpec examples
-    rake style                    # Run all style checks
-    rake style:chef               # Run Chef style checks
-    rake style:ruby               # Run Ruby style checks
-    rake style:ruby:auto_correct  # Auto-correct RuboCop offenses
-    rake travis                   # Run all tests on Travis
 
 ## License and Authors
 
