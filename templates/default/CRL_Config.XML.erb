@@ -31,15 +31,15 @@
         <to><%= @smtp_to.join(',') %></to>
         <published_notify><% if @smtp_published_notify == true || @smtp_published_notify == 'true'%>true<% end %></published_notify> <!-- no value for FALSE -->
         <title><%= @smtp_title %></title>
-        <SMTPThreshold>2</SMTPThreshold> <!-- event level when an SMTP message is sent -->
+        <SMTPThreshold><%= @smtp_threshold %></SMTPThreshold> <!-- event level when an SMTP message is sent -->
     </SMTP>
 
     <eventvwr>
         <EventSource><%= @eventvwr_event_source %></EventSource>
         <EventID><%= @eventvwr_event_id %></EventID>
-        <EventHigh><%= @eventvwr_event_high %></EventHigh>
-        <EventWarning><%= @eventvwr_event_warning %></EventWarning>
-        <EventInformation><%= @eventvwr_event_information %></EventInformation>
+        <EventHigh>1</EventHigh>
+        <EventWarning>2</EventWarning>
+        <EventInformation>4</EventInformation>
     </eventvwr>
 
     <warnings>

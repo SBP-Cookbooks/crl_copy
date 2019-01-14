@@ -1,14 +1,14 @@
 name             'crl_copy'
-maintainer       'Stephen Hoekstra'
-maintainer_email 'shoekstra@schubergphilis.com'
+maintainer       'Schuberg Philis'
+maintainer_email 'cookbooks@schubergphilis.com'
 license          'Apache-2.0'
-description      'Chef cookbook to installand configure the CRL Copy PS script from Script Center'
-version          '0.1.0'
-source_url       'https://github.com/shoekstra/chef-crl_copy' if respond_to?(:source_url)
-issues_url       'https://github.com/shoekstra/chef-crl_copy/issues' if respond_to?(:issues_url)
+description      'Installs and configures the CRL Copy PowerShell script from Script Center'
+long_description IO.read(File.join(File.dirname(__FILE__), 'README.md'))
+issues_url       'https://github.com/SBP-Cookbooks/crl_copy/issues'
+source_url       'https://github.com/SBP-Cookbooks/crl_copy'
+chef_version     '>= 14'
+version          '0.1.1'
 
-recipe           'crl_copy::default', 'Installs and configures script and scheduled task to manage CRL distribution.'
+supports 'windows'
 
-supports         'windows'
-
-depends 'windows'
+depends 'pspki', '~> 0.2.0'

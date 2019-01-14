@@ -16,25 +16,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-remote_file "#{Chef::Config['file_cache_path']}/pscx.msi" do
-  source node['crl_copy']['pscx']['source_url']
-end
-
-package node['crl_copy']['pscx']['package_name'] do
-  source "#{Chef::Config['file_cache_path']}/pscx.msi"
-  installer_type :msi
-end
-
-remote_file "#{Chef::Config['file_cache_path']}/pspki.exe" do
-  source node['crl_copy']['pspki']['source_name']
-end
-
-package node['crl_copy']['pspki']['package_name'] do
-  source "#{Chef::Config['file_cache_path']}/pspki.exe"
-  installer_type :custom
-  options 'addlocal=all /qn'
-end
-
 log 'crl_copy::default: No master CRLs specified, skipping crl_copy resource.' do
   level :warn
   not_if { node['crl_copy']['master_crls'] }
