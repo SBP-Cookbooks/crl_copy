@@ -24,10 +24,6 @@ default['crl_copy']['eventvwr']['event_high']        = 1
 default['crl_copy']['eventvwr']['event_warning']     = 2
 default['crl_copy']['eventvwr']['event_information'] = 4
 
-default['crl_copy']['pscx']['package_name']          = 'PowerShell Community Extensions 3.2.0'
-default['crl_copy']['pscx']['source_url']            = 'http://download-codeplex.sec.s-msft.com/Download/Release?ProjectName=pscx&DownloadId=923562&FileTime=130585918034470000&Build=21031'
-default['crl_copy']['pspki']['package_name']         = 'PowerShell PKI Module'
-default['crl_copy']['pspki']['source_name']          = 'http://download-codeplex.sec.s-msft.com/Download/Release?ProjectName=pspki&DownloadId=1440723&FileTime=130716062844400000&Build=21031'
 
 default['crl_copy']['smtp']['send_mail']             = false
 default['crl_copy']['smtp']['server']                = nil
